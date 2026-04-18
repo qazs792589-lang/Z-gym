@@ -7,7 +7,8 @@ const app = {
         weeksOffset: 0,
         wheelCallback: null,
         wheelValue: 0,
-        repsScrollTimeout: null
+        repsScrollTimeout: null,
+        detailDate: null
     },
 
     init() {
@@ -502,17 +503,26 @@ const app = {
     },
 
     showDayDetail(d) {
+        this.state.detailDate = d;
         const record = store.getDayRecord(d);
         const panel = document.getElementById('day-detail-content');
         const WEEKDAY_NAMES = ['日', '一', '二', '三', '四', '五', '六'];
         const dateStr = `${d.getFullYear()}年${d.getMonth()+1}月${d.getDate()}日（週${WEEKDAY_NAMES[d.getDay()]}）`;
 
+        const dateNavHtml = `
+            <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; padding-bottom:12px; border-bottom:1px solid var(--border-color);">
+                <button onclick="app.navigateDetailDay(-1)" style="background:var(--border-color); border:none; color:var(--primary); width:36px; height:36px; border-radius:8px; font-size:20px; cursor:pointer; flex-shrink:0;">‹</button>
+                <span style="font-size:14px; font-weight:900; text-align:center; flex:1; padding:0 8px;">${dateStr}</span>
+                <button onclick="app.navigateDetailDay(1)" style="background:var(--border-color); border:none; color:var(--primary); width:36px; height:36px; border-radius:8px; font-size:20px; cursor:pointer; flex-shrink:0;">›</button>
+            </div>
+        `;
+
         if (record.activities.length === 0) {
-            panel.className = 'detail-empty';
-            panel.innerHTML = `<div style="text-align:center;">
-                <div style="font-size:15px; font-weight:800; margin-bottom:6px;">${dateStr}</div>
-                <div style="color:var(--text-sub); font-size:13px;">當天沒有訓練紀錄</div>
-            </div>`;
+            panel.className = '';
+            panel.innerHTML = `
+                ${dateNavHtml}
+                <div style="text-align:center; padding:10px 0; color:var(--text-sub); font-size:13px;">當天沒有訓練紀錄</div>
+            `;
             return;
         }
 
@@ -546,7 +556,7 @@ const app = {
         }).join('');
 
         panel.innerHTML = `
-            <div class="detail-date-title">${dateStr}</div>
+            ${dateNavHtml}
             <div class="detail-meta">${metaParts.join(' · ')}</div>
             <div style="border-top:1px solid var(--border-color); padding-top:12px; margin-bottom:12px;">
                 ${exDetailsHtml}
@@ -556,6 +566,17 @@ const app = {
                 → 前往 ${d.getMonth()+1}/${d.getDate()} 的訓練紀錄
             </button>
         `;
+    },
+
+    navigateDetailDay(delta) {
+        const d = this.state.detailDate;
+        if (!d) return;
+        const next = new Date(d.getFullYear(), d.getMonth(), d.getDate() + delta);
+        // Update calendar highlight if the cell is visible
+        document.querySelectorAll('.day-cell.selected').forEach(c => c.classList.remove('selected'));
+        const cell = document.querySelector(`.day-cell[data-time="${next.getTime()}"]`);
+        if (cell) cell.classList.add('selected');
+        this.showDayDetail(next);
     },
 
     jumpToDay(timestamp) {
