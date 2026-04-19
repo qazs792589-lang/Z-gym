@@ -51,6 +51,15 @@ const app = {
         this.renderRecordView();
     },
 
+    changeViewDay(delta) {
+        const d = this.state.viewDate;
+        const next = new Date(d.getFullYear(), d.getMonth(), d.getDate() + delta);
+        // Block navigating to future
+        if (delta > 0 && next > new Date()) return;
+        this.state.viewDate = next;
+        this.renderRecordView();
+    },
+
     isToday(d) {
         const t = new Date();
         return d.getDate() === t.getDate() && d.getMonth() === t.getMonth() && d.getFullYear() === t.getFullYear();
@@ -64,7 +73,10 @@ const app = {
         document.getElementById('today-date-badge').innerText =
             `${d.getFullYear()}/${d.getMonth()+1}/${d.getDate()}`;
         document.getElementById('back-to-today-btn').style.display =
-            this.isToday(d) ? 'none' : 'block';
+            this.isToday(d) ? 'none' : 'inline-block';
+        // Disable forward button on today
+        const fwdBtn = document.getElementById('fwd-day-btn');
+        if (fwdBtn) { fwdBtn.disabled = this.isToday(d); fwdBtn.style.opacity = this.isToday(d) ? '0.3' : '1'; }
 
         this.updateStats(record);
         this.renderTypeChips(record.types || []);
@@ -421,8 +433,8 @@ const app = {
         let closest = null, minDist = Infinity;
         items.forEach((item, i) => {
             item.classList.remove('selected');
-            // Items start at offset 0 inside inner div; each is 40px
-            const itemCenter = i * 40 + 20;
+            // Items have 80px spacer before them; each is 40px
+            const itemCenter = 80 + i * 40 + 20; // = 100 + i*40
             const dist = Math.abs(itemCenter - center);
             if (dist < minDist) { minDist = dist; closest = item; }
         });
@@ -609,6 +621,12 @@ const app = {
 
     // ─── SUMMARY ─────────────────────────────────────────────
     generateSummary(range) {
+        // Update button active states
+        ['today', 'week', 'month'].forEach(r => {
+            const btn = document.getElementById(`btn-sum-${r}`);
+            if (!btn) return;
+            btn.className = r === range ? 'btn-full-green' : 'btn-outline-green w-100';
+        });
         const today = new Date();
         const days = range === 'today' ? 1 : (range === 'week' ? 7 : 30);
         let text = `【Fit Log - ${range === 'today' ? '今日' : range === 'week' ? '本週' : '本月'}訓練摘要】\n`;
