@@ -46,7 +46,7 @@
                     <div style="display:flex; align-items:center; margin-bottom:16px; border-bottom:1px solid var(--border-color); padding-bottom:16px; gap:8px;">
                         <button onclick="app.changeViewDay(-1)" style="background:var(--border-color); border:none; color:var(--primary); width:40px; height:40px; border-radius:10px; font-size:22px; cursor:pointer; flex-shrink:0;">‹</button>
                         <div style="flex:1; display:flex; flex-direction:column; align-items:center; gap:4px;">
-                            <span class="highlight" id="today-date-badge" style="font-size:18px; font-weight:800;"></span>
+                            <input type="date" id="today-date-badge" class="date-input-header" onchange="app.changeDateByPicker(this.value)">
                             <div id="back-to-today-btn" style="display:none; background:var(--primary); color:#000; padding:3px 12px; border-radius:8px; font-size:12px; font-weight:bold; cursor:pointer;" onclick="app.returnToToday()">🌟 回今日</div>
                         </div>
                         <button id="fwd-day-btn" onclick="app.changeViewDay(1)" style="background:var(--border-color); border:none; color:var(--primary); width:40px; height:40px; border-radius:10px; font-size:22px; cursor:pointer; flex-shrink:0;">›</button>
@@ -169,18 +169,8 @@
         <div id="view-settings" class="view main-view">
             <div class="content">
                 <div class="form-group" style="margin-top:16px;">
-                    <label style="color:#888;">訓練類型管理</label>
-                    <p style="font-size:12px;color:#555;margin-bottom:8px;">點擊「×」刪除</p>
-                    <div class="chip-group" id="settings-types-list"></div>
-                    <div style="display:flex;gap:10px;margin-top:10px;">
-                        <input type="text" id="new-type-input" class="custom-input" placeholder="新增類型名稱...">
-                        <button class="btn-outline-green" style="padding:10px 20px;" onclick="app.addTrainingType()">新增</button>
-                    </div>
-                </div>
-                <hr class="divider">
-                <div class="form-group">
-                    <label style="color:#888;">動作資料庫管理</label>
-                    <button class="btn-outline-green w-100" style="padding:12px; margin-top:8px; font-size:16px;" onclick="app.navToSub('view-manage-db')">管理所有部位與動作</button>
+                    <label style="color:#888;">資料庫管理</label>
+                    <button class="btn-outline-green w-100" style="padding:14px; margin-top:8px; font-size:16px;" onclick="app.navToSub('view-manage-db')">管理類型、部位與動作</button>
                 </div>
                 <hr class="divider">
                 <div class="form-group">
@@ -250,7 +240,7 @@
         <div id="view-manage-db" class="view sub-view">
             <header>
                 <button class="btn-text" onclick="app.closeSubView()">← 返回設定</button>
-                <h2>部位與動作管理</h2>
+                <h2>類型、部位與動作</h2>
             </header>
             <div class="content" id="manage-db-list"></div>
         </div>

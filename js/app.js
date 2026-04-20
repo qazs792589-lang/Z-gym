@@ -20,6 +20,12 @@ const app = {
 
     // ─── NAVIGATION ──────────────────────────────────────────
     switchTab(tabId, el) {
+        // If editing in a sub-view, ask before leaving
+        const activeSub = document.querySelector('.sub-view.active');
+        if (activeSub) {
+            if (!confirm('您正在編輯中，確定離開？\n（已記錄的組數已自動儲存）')) return;
+            document.querySelectorAll('.sub-view').forEach(v => v.classList.remove('active'));
+        }
         document.querySelectorAll('.main-view').forEach(v => v.classList.remove('active'));
         document.querySelectorAll('.nav-item').forEach(v => v.classList.remove('active'));
         document.getElementById(tabId).classList.add('active');
@@ -54,9 +60,13 @@ const app = {
     changeViewDay(delta) {
         const d = this.state.viewDate;
         const next = new Date(d.getFullYear(), d.getMonth(), d.getDate() + delta);
-        // Block navigating to future
-        if (delta > 0 && next > new Date()) return;
         this.state.viewDate = next;
+        this.renderRecordView();
+    },
+
+    changeDateByPicker(val) {
+        if (!val) return;
+        this.state.viewDate = new Date(val);
         this.renderRecordView();
     },
 
@@ -70,13 +80,20 @@ const app = {
         const record = store.getDayRecord(this.state.viewDate);
         const d = this.state.viewDate;
 
-        document.getElementById('today-date-badge').innerText =
-            `${d.getFullYear()}/${d.getMonth()+1}/${d.getDate()}`;
+        // Update date input (YYYY-MM-DD format)
+        const dateInput = document.getElementById('today-date-badge');
+        if (dateInput) {
+            const y = d.getFullYear();
+            const m = String(d.getMonth() + 1).padStart(2, '0');
+            const day = String(d.getDate()).padStart(2, '0');
+            dateInput.value = `${y}-${m}-${day}`;
+        }
+
         document.getElementById('back-to-today-btn').style.display =
             this.isToday(d) ? 'none' : 'inline-block';
-        // Disable forward button on today
+        // Remove forward button restriction
         const fwdBtn = document.getElementById('fwd-day-btn');
-        if (fwdBtn) { fwdBtn.disabled = this.isToday(d); fwdBtn.style.opacity = this.isToday(d) ? '0.3' : '1'; }
+        if (fwdBtn) { fwdBtn.disabled = false; fwdBtn.style.opacity = '1'; }
 
         this.updateStats(record);
         this.renderTypeChips(record.types || []);
@@ -155,7 +172,7 @@ const app = {
             return `
             <div class="action-item">
                 <div class="action-item-header">
-                    <span class="action-item-name">${act.exName}</span>
+                    <span class="action-item-name"><span style="font-size:12px; color:var(--text-sub); font-weight:normal; opacity:0.8;">[${act.catName || '未分類'}]</span> ${act.exName}</span>
                     <div style="display:flex; gap:10px; align-items:center;">
                         <button class="btn-outline-green" style="padding:5px 12px; font-size:13px;" onclick="app.openWorkout('${act.exId}', '${act.exName}')">繼續</button>
                         <span style="color:var(--danger); font-size:12px; cursor:pointer;" onclick="app.deleteActivity('${act.exId}')">刪除</span>
@@ -630,9 +647,9 @@ const app = {
         }
 
         document.getElementById('hist-week-days').innerText = wd;
-        document.getElementById('hist-week-time').innerText = wt;
+        document.getElementById('hist-week-time').innerText = Math.round(wt);
         document.getElementById('hist-month-days').innerText = md;
-        document.getElementById('hist-month-time').innerText = mt;
+        document.getElementById('hist-month-time').innerText = Math.round(mt);
     },
 
     // ─── SUMMARY ─────────────────────────────────────────────
@@ -678,15 +695,11 @@ const app = {
 
     // ─── SETTINGS ────────────────────────────────────────────
     renderSettingsView() {
-        const types = store.getTrainingTypes();
-        document.getElementById('settings-types-list').innerHTML = types.map(t => `
-            <div class="chip active" style="cursor:default;">
-                ${t} <span onclick="app.removeTrainingType('${t}')" style="color:var(--danger); cursor:pointer; font-size:14px; font-weight:900; margin-left:2px;">×</span>
-            </div>
-        `).join('');
         const s = store.getSettings();
-        document.getElementById('setting-weight').value = s.weight;
-        document.getElementById('setting-height').value = s.height;
+        const wEl = document.getElementById('setting-weight');
+        const hEl = document.getElementById('setting-height');
+        if (wEl) wEl.value = s.weight;
+        if (hEl) hEl.value = s.height;
     },
 
     addTrainingType() {
@@ -699,11 +712,21 @@ const app = {
         this.renderSettingsView();
     },
 
+    addTrainingTypeDB() {
+        const input = document.getElementById('new-type-db-input');
+        const val = input ? input.value.trim() : '';
+        if (!val) return;
+        const types = store.getTrainingTypes();
+        if (!types.includes(val)) { types.push(val); store.saveTrainingTypes(types); }
+        input.value = '';
+        this.renderManageDB();
+    },
+
     removeTrainingType(type) {
         if (!confirm(`刪除「${type}」？`)) return;
         const types = store.getTrainingTypes().filter(t => t !== type);
         store.saveTrainingTypes(types);
-        this.renderSettingsView();
+        this.renderManageDB();
     },
 
     saveSettings() {
@@ -717,7 +740,26 @@ const app = {
     // ─── MANAGE DB ───────────────────────────────────────────
     renderManageDB() {
         const cats = store.getCategories();
-        document.getElementById('manage-db-list').innerHTML = cats.map(c => {
+        const types = store.getTrainingTypes();
+
+        const typesCard = `
+            <div class="glass-card" style="margin-bottom:12px; padding:15px;">
+                <div style="font-weight:bold; margin-bottom:12px;">訓練類型</div>
+                <div style="display:flex; flex-wrap:wrap; gap:8px; margin-bottom:12px;">
+                    ${types.map(t => `
+                        <div class="chip active" style="cursor:default;">
+                            ${t} <span onclick="app.removeTrainingType('${t}')" style="color:var(--danger); cursor:pointer; font-size:14px; font-weight:900; margin-left:4px;">×</span>
+                        </div>
+                    `).join('')}
+                </div>
+                <div style="display:flex; gap:8px;">
+                    <input type="text" id="new-type-db-input" class="custom-input" style="flex:1; font-size:13px; padding:8px 10px;" placeholder="新增類型...">
+                    <button class="btn-outline-green" style="padding:8px 14px; font-size:13px; white-space:nowrap;" onclick="app.addTrainingTypeDB()">新增</button>
+                </div>
+            </div>
+        `;
+
+        const catsHtml = cats.map(c => {
             const exs = store.getExercises(c.id);
             const exRows = exs.map(e => `
                 <div style="display:flex; justify-content:space-between; align-items:center; margin:8px 0; padding-left:12px; font-size:14px; color:var(--text-sub);">
@@ -738,6 +780,8 @@ const app = {
                 </div>
             `;
         }).join('');
+
+        document.getElementById('manage-db-list').innerHTML = typesCard + catsHtml;
     },
 
     dbAddEx(catId) {

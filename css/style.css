@@ -31,10 +31,10 @@ body { background-color: var(--bg-dark); color: var(--text-main); font-size: 16p
     position: absolute; top: 0; left: 0; width: 100%; height: 100%;
     display: none; flex-direction: column;
     background: var(--bg-dark); overflow-y: auto;
-    padding-top: 60px; padding-bottom: 90px;
+    padding-top: 60px; padding-bottom: 120px;
 }
 .view.active { display: flex; }
-.sub-view { z-index: 100; padding-top: 0; padding-bottom: 20px; }
+.sub-view { z-index: 100; padding-top: 0; padding-bottom: 150px; }
 .sub-view header {
     padding: env(safe-area-inset-top, 15px) 20px 15px;
     border-bottom: 1px solid var(--border-color);
@@ -215,15 +215,15 @@ body { background-color: var(--bg-dark); color: var(--text-main); font-size: 16p
 /* Bottom Bar */
 #bottom-bar {
     position: fixed; bottom: 0; left: 0; width: 100%;
-    height: 80px; background: rgba(15,15,17,0.95);
+    height: 92px; background: rgba(15,15,17,0.95);
     backdrop-filter: blur(12px); border-top: 1px solid var(--border-color);
     display: flex; justify-content: space-around; align-items: center;
     padding-bottom: env(safe-area-inset-bottom, 0px); z-index: 1000;
 }
-.nav-item { display: flex; flex-direction: column; align-items: center; gap: 5px; color: var(--text-sub); font-size: 10px; font-weight: 600; cursor: pointer; transition: 0.2s; }
-.nav-item .icon { font-size: 22px; transition: transform 0.2s; }
+.nav-item { display: flex; flex-direction: column; align-items: center; gap: 5px; color: var(--text-sub); font-size: 12px; font-weight: 700; cursor: pointer; transition: 0.2s; min-width: 60px; }
+.nav-item .icon { font-size: 26px; transition: transform 0.2s; }
 .nav-item.active { color: var(--primary); }
-.nav-item.active .icon { transform: scale(1.2); }
+.nav-item.active .icon { transform: scale(1.15); }
 
 /* Time Picker Modal */
 .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 2000; display: none; align-items: flex-end; }
@@ -267,3 +267,13 @@ body { background-color: var(--bg-dark); color: var(--text-main); font-size: 16p
 .rep-badge { background: var(--primary-glow); color: var(--primary); border: 1px solid rgba(163,230,53,0.3); padding: 5px 12px; border-radius: 20px; font-size: 14px; font-weight: 700; cursor: pointer; }
 .rep-badge:active { background: rgba(239,68,68,0.2); border-color: var(--danger); color: var(--danger); }
 
+.date-input-header {
+    background: transparent; border: none; color: var(--primary); 
+    font-size: 20px; font-weight: 900; text-align: center; 
+    width: 145px; outline: none; cursor: pointer;
+    font-family: inherit;
+}
+.date-input-header::-webkit-calendar-picker-indicator {
+    filter: invert(1);
+    opacity: 0.5;
+}
