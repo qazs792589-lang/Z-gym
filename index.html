@@ -123,22 +123,24 @@
                     </div>
                 </div>
 
-                <!-- Day detail panel (shown when a day is clicked) -->
-                <div class="glass-card" id="day-detail-panel" style="min-height:80px;">
-                    <div id="day-detail-content" class="detail-empty">
-                        <span style="font-size:20px;">📅</span>
-                        <span>點選日期查看當天詳情</span>
+                <!-- Stats + Detail side by side -->
+                <div style="display:flex; gap:10px; align-items:flex-start;">
+                    <!-- Stats 2x2 on left -->
+                    <div class="glass-card" style="flex-shrink:0; width:42%; padding:12px;">
+                        <div style="font-size:10px; color:#666; font-weight:700; text-transform:uppercase; letter-spacing:.05em; margin-bottom:10px;">訓練統計</div>
+                        <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+                            <div class="stat-box"><span class="highlight stat-val" id="hist-week-days">0</span><span class="stat-label">本週天數</span></div>
+                            <div class="stat-box"><span class="highlight stat-val" id="hist-week-time">0</span><span class="stat-label">本週分鐘</span></div>
+                            <div class="stat-box"><span class="highlight stat-val" id="hist-month-days">0</span><span class="stat-label">本月天數</span></div>
+                            <div class="stat-box"><span class="highlight stat-val" id="hist-month-time">0</span><span class="stat-label">本月分鐘</span></div>
+                        </div>
                     </div>
-                </div>
-
-                <!-- Stats summary -->
-                <div class="glass-card">
-                    <h3 style="font-size:13px; color:#666; font-weight:700; text-transform:uppercase; letter-spacing:.05em; margin-bottom:14px;">訓練統計</h3>
-                    <div class="top-stats" style="margin-bottom:10px;">
-                        <div class="stat-box"><span class="highlight stat-val" id="hist-week-days">0</span><span class="stat-label">本週天數</span></div>
-                        <div class="stat-box"><span class="highlight stat-val" id="hist-week-time">0</span><span class="stat-label">本週分鐘</span></div>
-                        <div class="stat-box"><span class="highlight stat-val" id="hist-month-days">0</span><span class="stat-label">本月天數</span></div>
-                        <div class="stat-box"><span class="highlight stat-val" id="hist-month-time">0</span><span class="stat-label">本月分鐘</span></div>
+                    <!-- Day detail on right (scrollable) -->
+                    <div class="glass-card" id="day-detail-panel" style="flex:1; min-height:150px; padding:12px;">
+                        <div id="day-detail-content" class="detail-empty">
+                            <span style="font-size:18px;">📅</span>
+                            <span style="font-size:12px;">點選日期查看</span>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -155,8 +157,10 @@
                         <button id="btn-sum-week" class="btn-outline-green w-100" onclick="app.generateSummary('week')">本週報告</button>
                         <button id="btn-sum-month" class="btn-outline-green w-100" onclick="app.generateSummary('month')">本月報告</button>
                     </div>
-                    <textarea id="ai-summary-text" class="summary-textarea" readonly placeholder="產生的資料將顯示於此..."></textarea>
-                    <button class="btn-full-green" style="margin-top:10px" onclick="app.copySummary()">複製報告</button>
+                    <div class="flex-gap" style="margin-bottom:10px;">
+                        <button class="btn-full-green" style="flex:1;" onclick="app.copySummary()">複製報告</button>
+                    </div>
+                    <textarea id="ai-summary-text" class="summary-textarea" readonly placeholder="產生的資料將顯示於此..." style="min-height:520px;"></textarea>
                 </div>
             </div>
         </div>

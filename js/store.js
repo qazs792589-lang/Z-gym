@@ -46,9 +46,16 @@ const store = {
     saveTrainingTypes(types) { localStorage.setItem('fitlog_v2_training_types', JSON.stringify(types)); },
 
     // Categories
+    getHiddenDefaults() {
+        try { return JSON.parse(localStorage.getItem('fitlog_v2_hidden')) || { cats: [], exs: [] }; }
+        catch { return { cats: [], exs: [] }; }
+    },
+    saveHiddenDefaults(h) { localStorage.setItem('fitlog_v2_hidden', JSON.stringify(h)); },
+
     getCategories() {
+        const h = this.getHiddenDefaults();
         const custom = JSON.parse(localStorage.getItem('fitlog_v2_custom_cats') || '[]');
-        return [...DEFAULT_CATS, ...custom];
+        return [...DEFAULT_CATS.filter(c => !h.cats.includes(c.id)), ...custom];
     },
     addCustomCategory(name) {
         const custom = JSON.parse(localStorage.getItem('fitlog_v2_custom_cats') || '[]');
@@ -65,8 +72,19 @@ const store = {
 
     // Exercises
     getExercises(catId) {
+        const h = this.getHiddenDefaults();
         const custom = JSON.parse(localStorage.getItem('fitlog_v2_custom_exs') || '{}');
-        return [...(DEFAULT_EXS[catId] || []), ...(custom[catId] || [])];
+        return [...(DEFAULT_EXS[catId] || []).filter(e => !h.exs.includes(e.id)), ...(custom[catId] || [])];
+    },
+    hideDefaultCat(id) {
+        const h = this.getHiddenDefaults();
+        if (!h.cats.includes(id)) h.cats.push(id);
+        this.saveHiddenDefaults(h);
+    },
+    hideDefaultEx(exId) {
+        const h = this.getHiddenDefaults();
+        if (!h.exs.includes(exId)) h.exs.push(exId);
+        this.saveHiddenDefaults(h);
     },
     addCustomExercise(catId, name) {
         const custom = JSON.parse(localStorage.getItem('fitlog_v2_custom_exs') || '{}');

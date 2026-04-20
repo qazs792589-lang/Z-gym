@@ -511,7 +511,7 @@ const app = {
         this.updateHistoryStats();
         // Clear detail panel
         document.getElementById('day-detail-content').className = 'detail-empty';
-        document.getElementById('day-detail-content').innerHTML = '<span style="font-size:20px;">📅</span><span>點選日期查看當天詳情</span>';
+        document.getElementById('day-detail-content').innerHTML = '<span style="font-size:18px;">📅</span><span style="font-size:12px;">點選日期查看</span>';
     },
 
     showDayDetail(d) {
@@ -519,35 +519,35 @@ const app = {
         const record = store.getDayRecord(d);
         const panel = document.getElementById('day-detail-content');
         const WEEKDAY_NAMES = ['日', '一', '二', '三', '四', '五', '六'];
-        const dateStr = `${d.getFullYear()}年${d.getMonth()+1}月${d.getDate()}日（週${WEEKDAY_NAMES[d.getDay()]}）`;
 
         const dateNavHtml = `
-            <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; padding-bottom:12px; border-bottom:1px solid var(--border-color);">
-                <button onclick="app.navigateDetailDay(-1)" style="background:var(--border-color); border:none; color:var(--primary); width:36px; height:36px; border-radius:8px; font-size:20px; cursor:pointer; flex-shrink:0;">‹</button>
-                <span style="font-size:14px; font-weight:900; text-align:center; flex:1; padding:0 8px;">${dateStr}</span>
-                <button onclick="app.navigateDetailDay(1)" style="background:var(--border-color); border:none; color:var(--primary); width:36px; height:36px; border-radius:8px; font-size:20px; cursor:pointer; flex-shrink:0;">›</button>
+            <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; padding-bottom:10px; border-bottom:1px solid var(--border-color);">
+                <button onclick="app.navigateDetailDay(-1)" style="background:var(--border-color); border:none; color:var(--primary); width:28px; height:28px; border-radius:7px; font-size:17px; cursor:pointer; flex-shrink:0;">‹</button>
+                <span style="font-size:12px; font-weight:900; text-align:center; flex:1; padding:0 4px;">${d.getMonth()+1}/${d.getDate()}（週${WEEKDAY_NAMES[d.getDay()]}）</span>
+                <button onclick="app.navigateDetailDay(1)" style="background:var(--border-color); border:none; color:var(--primary); width:28px; height:28px; border-radius:7px; font-size:17px; cursor:pointer; flex-shrink:0;">›</button>
             </div>
         `;
+
+        const jumpBtn = `<button class="btn-full-green" style="font-size:12px; padding:8px; margin-top:8px;" onclick="app.jumpToDay(${d.getTime()})">✏️ 前往編輯</button>`;
 
         if (record.activities.length === 0) {
             panel.className = '';
             panel.innerHTML = `
                 ${dateNavHtml}
-                <div style="text-align:center; padding:10px 0; color:var(--text-sub); font-size:13px;">當天沒有訓練紀錄</div>
+                <div style="text-align:center; padding:8px 0; color:var(--text-sub); font-size:12px;">當天無訓練紀錄</div>
+                ${jumpBtn}
             `;
             return;
         }
 
         panel.className = '';
 
-        // Build detail HTML
         const metaParts = [];
         if (record.feeling) metaParts.push(record.feeling);
-        if (record.duration) metaParts.push(`${record.duration}分鐘`);
+        if (record.duration) metaParts.push(`${record.duration}分`);
         if (record.types && record.types.length) metaParts.push(record.types.join('、'));
 
         const exDetailsHtml = record.activities.map(act => {
-            // Group by weight descending
             const groups = {};
             act.sets.forEach(s => {
                 if (!groups[s.kg]) groups[s.kg] = [];
@@ -569,14 +569,12 @@ const app = {
 
         panel.innerHTML = `
             ${dateNavHtml}
-            <div class="detail-meta">${metaParts.join(' · ')}</div>
-            <div style="border-top:1px solid var(--border-color); padding-top:12px; margin-bottom:12px;">
+            <div class="detail-meta" style="font-size:11px; margin-bottom:8px;">${metaParts.join(' · ')}</div>
+            <div style="border-top:1px solid var(--border-color); padding-top:8px; margin-bottom:8px;">
                 ${exDetailsHtml}
             </div>
-            ${record.notes ? `<div style="font-size:13px; color:var(--text-sub); margin-bottom:12px; padding:8px 10px; background:rgba(255,255,255,0.03); border-radius:8px;">📝 ${record.notes}</div>` : ''}
-            <button class="btn-full-green" style="font-size:14px; padding:12px;" onclick="app.jumpToDay(${d.getTime()})">
-                → 前往 ${d.getMonth()+1}/${d.getDate()} 的訓練紀錄
-            </button>
+            ${record.notes ? `<div style="font-size:11px; color:var(--text-sub); margin-bottom:8px; padding:6px 8px; background:rgba(255,255,255,0.03); border-radius:8px;">📝 ${record.notes}</div>` : ''}
+            ${jumpBtn}
         `;
     },
 
@@ -604,15 +602,33 @@ const app = {
 
     updateHistoryStats() {
         const today = new Date();
+
+        // 本週：本週一到今天（週日視為上週末，週一為本週起點）
+        const dow = today.getDay(); // 0=Sun
+        const mondayOffset = dow === 0 ? -6 : 1 - dow;
+        const monday = new Date(today.getFullYear(), today.getMonth(), today.getDate() + mondayOffset);
+
+        // 本月：本月1號到今天
+        const firstOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+
         let wd = 0, wt = 0, md = 0, mt = 0;
-        for (let i = 0; i < 30; i++) {
-            const d = new Date(today.getFullYear(), today.getMonth(), today.getDate() - i);
+
+        // 週統計（Mon → today，最多7天）
+        for (let i = 0; i < 7; i++) {
+            const d = new Date(monday.getFullYear(), monday.getMonth(), monday.getDate() + i);
+            if (d > today) break;
             const r = store.getDayRecord(d);
-            if (r.activities.length > 0) {
-                if (i < 7) { wd++; wt += r.duration || 0; }
-                md++; mt += r.duration || 0;
-            }
+            if (r.activities.length > 0) { wd++; wt += r.duration || 0; }
         }
+
+        // 月統計（1日 → today）
+        const daysThisMonth = today.getDate();
+        for (let i = 1; i <= daysThisMonth; i++) {
+            const d = new Date(today.getFullYear(), today.getMonth(), i);
+            const r = store.getDayRecord(d);
+            if (r.activities.length > 0) { md++; mt += r.duration || 0; }
+        }
+
         document.getElementById('hist-week-days').innerText = wd;
         document.getElementById('hist-week-time').innerText = wt;
         document.getElementById('hist-month-days').innerText = md;
@@ -703,38 +719,48 @@ const app = {
         const cats = store.getCategories();
         document.getElementById('manage-db-list').innerHTML = cats.map(c => {
             const exs = store.getExercises(c.id);
-            const isDefaultCat = DEFAULT_CATS.some(d => d.id === c.id);
+            const exRows = exs.map(e => `
+                <div style="display:flex; justify-content:space-between; align-items:center; margin:8px 0; padding-left:12px; font-size:14px; color:var(--text-sub);">
+                    <span>· ${e.name}</span>
+                    <span style="color:var(--danger); cursor:pointer; padding:4px 8px;" onclick="app.dbDeleteEx('${c.id}', '${e.id}')">刪除</span>
+                </div>`).join('');
             return `
                 <div class="glass-card" style="margin-bottom:12px; padding:15px;">
                     <div style="display:flex; justify-content:space-between; align-items:center; font-weight:bold; margin-bottom:10px;">
                         <span>${c.name}</span>
-                        ${!isDefaultCat
-                            ? `<span style="color:var(--danger); font-size:12px; cursor:pointer;" onclick="app.dbDeleteCat('${c.id}')">刪除部位</span>`
-                            : '<span style="color:#444; font-size:11px;">預設</span>'}
+                        <span style="color:var(--danger); font-size:12px; cursor:pointer; padding:4px 8px;" onclick="app.dbDeleteCat('${c.id}')">刪除部位</span>
                     </div>
-                    ${exs.map(e => {
-                        const isDefaultEx = DEFAULT_CATS.some(d => d.id === c.id) && DEFAULT_EXS[c.id] && DEFAULT_EXS[c.id].some(x => x.id === e.id);
-                        return `<div style="display:flex; justify-content:space-between; align-items:center; margin:8px 0; padding-left:12px; font-size:14px; color:var(--text-sub);">
-                            <span>· ${e.name}</span>
-                            ${!isDefaultEx
-                                ? `<span style="color:var(--danger); cursor:pointer;" onclick="app.dbDeleteEx('${c.id}', '${e.id}')">刪除</span>`
-                                : '<span style="color:#444; font-size:11px;">預設</span>'}
-                        </div>`;
-                    }).join('')}
+                    ${exRows || '<div style="font-size:13px; color:#444; padding-left:12px;">（無動作）</div>'}
+                    <div style="display:flex; gap:8px; margin-top:12px; padding-top:10px; border-top:1px solid var(--border-color);">
+                        <input type="text" id="new-ex-db-${c.id}" class="custom-input" style="flex:1; font-size:13px; padding:8px 10px;" placeholder="新增動作...">
+                        <button class="btn-outline-green" style="padding:8px 14px; font-size:13px; white-space:nowrap;" onclick="app.dbAddEx('${c.id}')">新增</button>
+                    </div>
                 </div>
             `;
         }).join('');
     },
 
+    dbAddEx(catId) {
+        const input = document.getElementById(`new-ex-db-${catId}`);
+        const name = (input && input.value.trim());
+        if (!name) return;
+        store.addCustomExercise(catId, name);
+        input.value = '';
+        this.renderManageDB();
+    },
+
     dbDeleteCat(id) {
-        if (!confirm('確定刪除此自訂部位？')) return;
-        store.deleteCustomCategory(id);
+        if (!confirm('確定刪除此部位及所有動作？')) return;
+        if (DEFAULT_CATS.some(d => d.id === id)) { store.hideDefaultCat(id); }
+        else { store.deleteCustomCategory(id); }
         this.renderManageDB();
     },
 
     dbDeleteEx(catId, exId) {
-        if (!confirm('確定刪除此自訂動作？')) return;
-        store.deleteCustomExercise(catId, exId);
+        if (!confirm('確定刪除此動作？')) return;
+        const isDefault = DEFAULT_EXS[catId] && DEFAULT_EXS[catId].some(e => e.id === exId);
+        if (isDefault) { store.hideDefaultEx(exId); }
+        else { store.deleteCustomExercise(catId, exId); }
         this.renderManageDB();
     }
 };
