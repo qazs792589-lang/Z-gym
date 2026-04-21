@@ -161,15 +161,13 @@ body { background-color: var(--bg-dark); color: var(--text-main); font-size: 16p
 .day-cell.today { background: var(--primary); border-color: var(--primary); }
 .day-cell.today .day-num { color: #000 !important; font-weight: 900; }
 .day-cell.selected { border: 2px solid var(--primary); z-index: 5; transform: scale(1.05); box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
-.day-num { font-size: 14px; font-weight: 800; color: #e4e4e7; line-height: 1; margin-bottom: 4px; }
+.day-num { font-size: 20px !important; font-weight: 900; color: #e4e4e7; line-height: 1; margin-bottom: 4px; }
 .day-tags { display: flex; flex-direction: column; gap: 2px; width: 100%; }
 .day-tag { font-size: 8px; padding: 1px 3px; border-radius: 3px; background: rgba(163,230,53,0.15); color: var(--primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
 .day-month-label { 
     position: absolute; top: 0; right: 0; 
-    font-size: 14px; color: #000 !important; font-weight: 900; 
-    background: var(--primary) !important; padding: 2px 6px; 
-    border-radius: 0 8px 0 8px;
-    z-index: 2;
+    font-size: 20px !important; color: var(--primary) !important; font-weight: 900; 
+    padding: 2px 5px; z-index: 2;
 }
 
 /* Today highlight refinements */
