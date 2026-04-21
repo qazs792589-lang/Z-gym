@@ -52,22 +52,22 @@
                         <button id="fwd-day-btn" onclick="app.changeViewDay(1)" style="background:var(--border-color); border:none; color:var(--primary); width:40px; height:40px; border-radius:10px; font-size:22px; cursor:pointer; flex-shrink:0;">›</button>
                     </div>
 
-                    <!-- Types + Duration inline -->
-                    <div class="form-group" style="margin-bottom:0;">
-                        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:10px;">
-                            <label style="margin-bottom:0;">訓練類型</label>
-                            <!-- Duration inline -->
-                            <div style="display:flex; align-items:center; gap:8px; cursor:pointer;" onclick="app.openTimePicker()">
-                                <span style="font-size:12px; color:var(--text-sub);">時長</span>
-                                <div style="background:rgba(163,230,53,0.1); border:1px solid var(--primary); padding:5px 12px; border-radius:8px; font-weight:800; color:var(--primary); font-size:15px;">
+                        <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+                            <!-- Left: Types -->
+                            <div style="flex:1;">
+                                <label style="margin-bottom:10px; display:block;">訓練類型</label>
+                                <div class="chip-group" id="training-types-container">
+                                    <!-- Chips by JS -->
+                                </div>
+                            </div>
+                            <!-- Right: Duration -->
+                            <div style="display:flex; flex-direction:column; align-items:flex-end; gap:6px; cursor:pointer; margin-left:15px; flex-shrink:0;" onclick="app.openTimePicker()">
+                                <label style="margin-bottom:0; cursor:pointer; color:var(--text-sub); font-size:13px; font-weight:600;">時長</label>
+                                <div style="background:rgba(163,230,53,0.1); border:1px solid var(--primary); padding:4px 10px; border-radius:8px; font-weight:800; color:var(--primary); font-size:14px;">
                                     <span id="lbl-duration">60</span><span style="font-size:11px; margin-left:2px;">分</span>
                                 </div>
                             </div>
                         </div>
-                        <div class="chip-group" id="training-types-container">
-                            <!-- Chips by JS -->
-                        </div>
-                    </div>
 
                     <div class="form-group" style="margin-top:16px; margin-bottom:0;">
                         <label>整體感受</label>
@@ -149,18 +149,17 @@
         <!-- SUMMARY VIEW -->
         <div id="view-summary" class="view main-view">
             <div class="content">
-                <div class="glass-card">
-                    <h3 style="margin-bottom:16px;">AI 專屬數據摘要</h3>
-                    <p style="color:#aaa;font-size:14px;margin-bottom:16px;">產生格式化報告，貼給 AI 教練分析。</p>
-                    <div class="flex-gap">
-                        <button id="btn-sum-today" class="btn-full-green" onclick="app.generateSummary('today')">今日報告</button>
-                        <button id="btn-sum-week" class="btn-outline-green w-100" onclick="app.generateSummary('week')">本週報告</button>
-                        <button id="btn-sum-month" class="btn-outline-green w-100" onclick="app.generateSummary('month')">本月報告</button>
-                    </div>
-                    <div class="flex-gap" style="margin-bottom:10px;">
-                        <button class="btn-full-green" style="flex:1;" onclick="app.copySummary()">複製報告</button>
-                    </div>
-                    <textarea id="ai-summary-text" class="summary-textarea" readonly placeholder="產生的資料將顯示於此..." style="min-height:520px;"></textarea>
+                <button class="btn-full-green" style="margin-bottom:16px; font-size:18px; padding:20px;" onclick="app.copySummary()">📋 複製總結報告</button>
+
+                <div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:10px; margin-bottom:16px;">
+                    <button class="btn-outline-green w-100" id="btn-sum-today" onclick="app.generateSummary('today')">今日</button>
+                    <button class="btn-outline-green w-100" id="btn-sum-week" onclick="app.generateSummary('week')">本週</button>
+                    <button class="btn-outline-green w-100" id="btn-sum-month" onclick="app.generateSummary('month')">本月</button>
+                </div>
+                
+                <div class="glass-card" style="padding:15px; border:none; background:transparent;">
+                    <div style="font-weight:800; font-size:16px; margin-bottom:12px; color:var(--text-sub);">教練總結內容</div>
+                    <div id="ai-summary-text" class="summary-display-box">產生的資料將顯示於此...</div>
                 </div>
             </div>
         </div>

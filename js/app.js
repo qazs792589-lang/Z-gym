@@ -172,7 +172,7 @@ const app = {
             return `
             <div class="action-item">
                 <div class="action-item-header">
-                    <span class="action-item-name"><span style="font-size:12px; color:var(--text-sub); font-weight:normal; opacity:0.8;">[${act.catName || '未分類'}]</span> ${act.exName}</span>
+                    <span class="action-item-name">${act.exName} <span style="font-size:12px; color:var(--text-sub); font-weight:normal; opacity:0.8; margin-left:10px;">[${act.catName || '未分類'}]</span></span>
                     <div style="display:flex; gap:10px; align-items:center;">
                         <button class="btn-outline-green" style="padding:5px 12px; font-size:13px;" onclick="app.openWorkout('${act.exId}', '${act.exName}')">繼續</button>
                         <span style="color:var(--danger); font-size:12px; cursor:pointer;" onclick="app.deleteActivity('${act.exId}')">刪除</span>
@@ -681,15 +681,23 @@ const app = {
             }
         }
         text += `\n══════════\n總訓練容量: ${totalVol} kg`;
-        document.getElementById('ai-summary-text').value = text;
+        document.getElementById('ai-summary-text').innerText = text;
     },
 
     copySummary() {
         const el = document.getElementById('ai-summary-text');
+        const text = el.innerText;
         if (navigator.clipboard) {
-            navigator.clipboard.writeText(el.value).then(() => alert('複製成功！'));
+            navigator.clipboard.writeText(text).then(() => alert('複製成功！'));
         } else {
-            el.select(); document.execCommand('copy'); alert('複製成功！');
+            // Fallback
+            const textArea = document.createElement("textarea");
+            textArea.value = text;
+            document.body.appendChild(textArea);
+            textArea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textArea);
+            alert('複製成功！');
         }
     },
 
