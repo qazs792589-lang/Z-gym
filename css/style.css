@@ -138,50 +138,95 @@ body { background-color: var(--bg-dark); color: var(--text-main); font-size: 16p
 }
 .inline-wheel-item.selected { color: var(--primary); font-size: 30px; font-weight: 900; }
 
-/* Calendar */
-.calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; margin-top: 10px; }
-.weekday { text-align: center; font-size: 11px; color: #666; font-weight: 700; padding-bottom: 8px; }
+/* Calendar - Borderless Modern Optimization */
+.calendar-grid { 
+    display: grid; 
+    grid-template-columns: repeat(7, 1fr); 
+    gap: 6px; /* 增加留白區隔代替邊框 */
+    margin-top: 15px; 
+    padding: 0 5px;
+}
+.weekday { 
+    text-align: center; 
+    font-size: 11px; 
+    color: #555; 
+    font-weight: 800; 
+    padding-bottom: 12px; 
+    border: none; /* 移除表頭邊框 */
+}
 .calendar-days { display: contents; }
 .day-cell {
-    aspect-ratio: 1 / 1.2;
-    border-radius: 8px;
-    background: #151518;
+    aspect-ratio: 1 / 1.25; /* 稍微拉高，給文字更多空間 */
+    border-radius: 12px; /* 圓角加大更具現代感 */
+    background: #1c1c1e; /* 基礎底色 */
     display: flex;
     flex-direction: column;
-    align-items: flex-start;
-    padding: 6px 4px 4px;
+    align-items: center; /* 改為置中對齊 */
+    padding: 8px 4px 6px;
     cursor: pointer;
-    border: 1px solid #27272a;
+    border: none !important; /* 強制移除邊框 */
     overflow: hidden;
-    transition: .1s;
+    transition: transform 0.1s, background 0.2s;
     position: relative;
 }
-.day-cell:active { opacity: .7; }
-.day-cell.has-data { background: #191e11; border-color: rgba(163,230,53,0.3); }
-.day-cell.today { background: var(--primary); border-color: var(--primary); }
+.day-cell:active { transform: scale(0.95); opacity: 0.8; }
+.day-cell.has-data { background: #242426; } /* 有資料的日期稍微亮一點點 */
+.day-cell.today { 
+    background: var(--primary) !important; 
+    box-shadow: 0 4px 15px rgba(163,230,53,0.3);
+}
 .day-cell.today .day-num { color: #000 !important; font-weight: 900; }
-.day-cell.selected { border: 2px solid var(--primary); z-index: 5; transform: scale(1.05); box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
-.day-num { font-size: 20px !important; font-weight: 900; color: #e4e4e7; line-height: 1; margin-bottom: 4px; }
-.day-tags { display: flex; flex-direction: column; gap: 2px; width: 100%; }
-.day-tag { font-size: 8px; padding: 1px 3px; border-radius: 3px; background: rgba(163,230,53,0.15); color: var(--primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+.day-cell.today .day-tag { background: rgba(0,0,0,0.1) !important; color: #000 !important; }
+
+/* 選取狀態改用外發光，不佔空間 */
+.day-cell.selected { 
+    box-shadow: 0 0 0 2px var(--primary); 
+    z-index: 5; 
+}
+.day-cell.selected:not(.today) { background: #2c2c2e; }
+
+.day-num { 
+    font-size: 18px !important; 
+    font-weight: 800; 
+    color: #eee; 
+    line-height: 1; 
+    margin-bottom: 6px; 
+    text-align: center;
+}
+.day-tags { 
+    display: flex; 
+    flex-direction: column; 
+    gap: 3px; 
+    width: 100%; 
+    align-items: center;
+}
+.day-tag { 
+    font-size: 9px; 
+    padding: 2px 4px; 
+    border-radius: 4px; 
+    background: rgba(163,230,53,0.12); 
+    color: var(--primary); 
+    white-space: nowrap; 
+    overflow: hidden; 
+    text-overflow: ellipsis; 
+    width: 90%; 
+    text-align: center;
+    font-weight: 700;
+}
 .day-month-label { 
-    position: absolute; top: 0; right: 0; 
-    font-size: 20px !important; color: var(--primary) !important; font-weight: 900; 
-    padding: 2px 5px; z-index: 2;
+    position: absolute; 
+    top: 2px; 
+    right: 4px; 
+    font-size: 10px !important; 
+    color: var(--primary) !important; 
+    font-weight: 900; 
+    opacity: 0.8;
 }
 
-/* Today highlight refinements */
-.day-cell.today {
-    background: var(--primary) !important;
-    border-color: var(--primary) !important;
-    box-shadow: 0 0 10px rgba(163,230,53,0.3);
+/* Selected highlight Re-refinement */
+.day-cell.selected:not(.today) { 
+    background: #2c2c2e;
 }
-.day-cell.today .day-num { color: #000 !important; }
-.day-cell.today .day-month-label { color: rgba(0,0,0,0.5) !important; }
-.day-cell.today .day-tag { background: rgba(0,0,0,0.15) !important; color: #000 !important; }
-
-/* Selected highlight */
-.day-cell.selected:not(.today) { border-color: var(--primary); box-shadow: 0 0 0 1px var(--primary); }
 
 .day-num {
     font-size: 15px;
