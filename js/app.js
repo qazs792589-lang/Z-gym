@@ -65,7 +65,10 @@ const app = {
     },
 
     changeDateByPicker(val) {
-        if (!val) return;
+        if (!val) {
+            this.renderRecordView(); // Re-sync display if cleared
+            return;
+        }
         this.state.viewDate = new Date(val);
         this.renderRecordView();
     },
