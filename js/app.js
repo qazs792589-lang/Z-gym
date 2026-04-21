@@ -471,37 +471,43 @@ const app = {
     // ─── HISTORY ─────────────────────────────────────────────
     renderHistoryView() {
         const grid = document.getElementById('calendar-days');
+        if (!grid) return;
         grid.innerHTML = '';
         const today = new Date();
-        const dayOfWeek = (today.getDay() + 6) % 7; // Mon=0
-        const baseMonday = new Date(today);
-        baseMonday.setDate(today.getDate() - dayOfWeek - 21 + this.state.weeksOffset * 7);
+        
+        // 核心邏輯：如果 weeksOffset 為 0 (初始載入)，顯示包含今天的過去 4 週。
+        // 如果 offset != 0，則對齊到目標月份的 1 號。
+        let baseMonday;
+        let mainMonth, mainYear;
 
-        // Compute month label range
-        const startDate = new Date(baseMonday);
-        const endDate = new Date(baseMonday.getFullYear(), baseMonday.getMonth(), baseMonday.getDate() + 27);
-        const WEEKDAYS = ['日','一','二','三','四','五','六'];
-        let monthLabel;
-        if (startDate.getMonth() === endDate.getMonth()) {
-            monthLabel = `${startDate.getFullYear()}年${startDate.getMonth()+1}月`;
+        if (this.state.weeksOffset === 0) {
+            const dayOfWeek = (today.getDay() + 6) % 7;
+            baseMonday = new Date(today.getFullYear(), today.getMonth(), today.getDate() - dayOfWeek - 21);
+            const midDate = new Date(baseMonday.getFullYear(), baseMonday.getMonth(), baseMonday.getDate() + 14);
+            mainMonth = midDate.getMonth();
+            mainYear = midDate.getFullYear();
         } else {
-            monthLabel = `${startDate.getFullYear()}年${startDate.getMonth()+1}月 — ${endDate.getMonth()+1}月`;
+            // 計算目標月份 (以今天為基準加減 N 個月)
+            const targetDate = new Date(today.getFullYear(), today.getMonth() + (this.state.weeksOffset / 4), 1);
+            mainMonth = targetDate.getMonth();
+            mainYear = targetDate.getFullYear();
+            // 找到該月 1 號是週幾，並回推到週一
+            const firstDayOfMonth = new Date(mainYear, mainMonth, 1);
+            const dayOfFirst = (firstDayOfMonth.getDay() + 6) % 7;
+            baseMonday = new Date(mainYear, mainMonth, 1 - dayOfFirst);
         }
-        document.getElementById('calendar-month-label').innerText = monthLabel;
 
-        for (let i = 0; i < 28; i++) {
+        document.getElementById('calendar-month-label').innerText = `${mainYear}年${mainMonth + 1}月`;
+
+        // 增加到 35 天 (5 週)
+        for (let i = 0; i < 35; i++) {
             const d = new Date(baseMonday.getFullYear(), baseMonday.getMonth(), baseMonday.getDate() + i);
             const isToday = this.isToday(d);
             const record = store.getDayRecord(d);
             const hasData = record.activities.length > 0;
+            const isOtherMonth = d.getMonth() !== mainMonth;
 
-            // Month label on the 1st of each month
-            let monthLabelHtml = '';
-            if (d.getDate() === 1) {
-                monthLabelHtml = `<div class="day-month-label">${d.getMonth()+1}月</div>`;
-            }
-
-            // Category tags inside cell
+            // Category tags inside cell (保持原有邏輯)
             let tagsHtml = '';
             if (hasData) {
                 const cats = [...new Set(record.activities.map(a => a.catName))];
@@ -513,15 +519,16 @@ const app = {
             }
 
             const cell = document.createElement('div');
-            cell.className = `day-cell ${isToday ? 'today' : ''} ${hasData ? 'has-data' : ''}`;
+            // 加入 other-month 處理非當月日期
+            cell.className = `day-cell ${isToday ? 'today' : ''} ${hasData ? 'has-data' : ''} ${isOtherMonth ? 'other-month' : ''}`;
             cell.dataset.time = d.getTime();
+            
+            // 日期純數字化：移除月份標記，僅顯示 d.getDate()
             cell.innerHTML = `
-                ${monthLabelHtml}
                 <div class="day-num">${d.getDate()}</div>
                 ${tagsHtml}
             `;
             cell.onclick = () => {
-                // Toggle selected highlight
                 document.querySelectorAll('.day-cell.selected').forEach(c => c.classList.remove('selected'));
                 cell.classList.add('selected');
                 this.showDayDetail(d);

@@ -241,6 +241,8 @@ body { background-color: var(--bg-dark); color: var(--text-main); font-size: 16p
     line-height: 1;
     margin-bottom: 2px;
 }
+.other-month { color: #ccc !important; opacity: 0.5; }
+.other-month .day-num { color: #666 !important; }
 /* Category tag dots inside cells */
 .day-tags { display: flex; flex-direction: column; gap: 2px; width: 100%; }
 .day-tag {
