@@ -22,7 +22,7 @@ body { background-color: var(--bg-dark); color: var(--text-main); font-size: 16p
     position: absolute; top: 0; left: 0; width: 100%; z-index: 50;
     height: 60px;
 }
-.logo { font-size: 22px; font-weight: 900; letter-spacing: -1px; }
+.logo { font-size: 28px; font-weight: 900; letter-spacing: -1.5px; }
 .highlight { color: var(--primary); }
 .version-badge { font-size: 10px; background: var(--border-color); color: var(--text-sub); padding: 2px 6px; border-radius: 4px; font-weight: bold; }
 
@@ -138,33 +138,40 @@ body { background-color: var(--bg-dark); color: var(--text-main); font-size: 16p
 .inline-wheel-item.selected { color: var(--primary); font-size: 30px; font-weight: 900; }
 
 /* Calendar */
-.calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; margin-top: 10px; }
+.calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; margin-top: 10px; }
 .weekday { text-align: center; font-size: 11px; color: #666; font-weight: 700; padding-bottom: 8px; }
 .calendar-days { display: contents; }
 .day-cell {
-    min-height: 96px;
+    aspect-ratio: 1 / 1.2;
     border-radius: 8px;
-    background: #1a1a1d;
+    background: #151518;
     display: flex;
     flex-direction: column;
     align-items: flex-start;
     padding: 6px 4px 4px;
     cursor: pointer;
-    border: 1px solid #2a2a2d;
+    border: 1px solid #27272a;
     overflow: hidden;
-    transition: .15s;
+    transition: .1s;
     position: relative;
 }
 .day-cell:active { opacity: .7; }
-.day-cell.has-data { background: #191e11; border-color: rgba(163,230,53,0.2); }
+.day-cell.has-data { background: #191e11; border-color: rgba(163,230,53,0.3); }
+.day-cell.today { background: var(--primary); border-color: var(--primary); }
+.day-cell.today .day-num { color: #000 !important; font-weight: 900; }
+.day-cell.selected { border: 2px solid var(--primary); z-index: 5; transform: scale(1.05); box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
+.day-num { font-size: 14px; font-weight: 800; color: #e4e4e7; line-height: 1; margin-bottom: 4px; }
+.day-tags { display: flex; flex-direction: column; gap: 2px; width: 100%; }
+.day-tag { font-size: 8px; padding: 1px 3px; border-radius: 3px; background: rgba(163,230,53,0.15); color: var(--primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+.day-month-label { position: absolute; top: 2px; right: 2px; font-size: 8px; color: var(--primary); font-weight: 900; opacity: .8; }
 
-/* Today: prominent green background */
+/* Today highlight refinements */
 .day-cell.today {
     background: var(--primary) !important;
     border-color: var(--primary) !important;
-    box-shadow: 0 0 10px rgba(163,230,53,0.4);
+    box-shadow: 0 0 10px rgba(163,230,53,0.3);
 }
-.day-cell.today .day-num { color: #000 !important; font-weight: 900; }
+.day-cell.today .day-num { color: #000 !important; }
 .day-cell.today .day-month-label { color: rgba(0,0,0,0.5) !important; }
 .day-cell.today .day-tag { background: rgba(0,0,0,0.15) !important; color: #000 !important; }
 
