@@ -22,7 +22,8 @@ body { background-color: var(--bg-dark); color: var(--text-main); font-size: 16p
     position: absolute; top: 0; left: 0; width: 100%; z-index: 50;
     height: 60px;
 }
-.logo { font-size: 28px; font-weight: 900; letter-spacing: -1.5px; }
+.logo { display: flex; align-items: center; gap: 8px; font-size: 28px; font-weight: 900; letter-spacing: -1.5px; }
+.logo-icon { width: 24px; height: 24px; fill: var(--primary); filter: drop-shadow(0 0 5px var(--primary-glow)); }
 .highlight { color: var(--primary); }
 .version-badge { font-size: 10px; background: var(--border-color); color: var(--text-sub); padding: 2px 6px; border-radius: 4px; font-weight: bold; }
 
