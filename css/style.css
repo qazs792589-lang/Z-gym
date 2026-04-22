@@ -145,24 +145,28 @@ body {
     margin-bottom: 16px;
     border: 1px solid var(--border-color);
 }
+/* 無邊際容器：移除背景、圓角、陰影、外框 */
 .calendar-card { 
-    padding: 16px 0 !important; /* 左右 Padding 設為 0 */
-    border-left: none !important; 
-    border-right: none !important; 
-    border-radius: 0; 
+    background: transparent !important; 
+    border: none !important; 
+    box-shadow: none !important; 
+    border-radius: 0 !important; 
+    padding: 16px 0 0 0 !important; 
+    margin: 0 !important;
+    width: 100%;
 }
 
-/* Calendar Grid Styles */
+/* Calendar - Cross-hatch Grid Optimization */
 .calendar-grid { 
     display: grid; 
     grid-template-columns: repeat(7, 1fr); 
-    background: #000;
+    background: transparent;
     border-bottom: 1px solid #27272a;
 }
 .calendar-days-grid {
     display: grid;
     grid-template-columns: repeat(7, 1fr);
-    background: #000;
+    background: transparent;
 }
 .weekday { 
     text-align: center; 
@@ -183,14 +187,19 @@ body {
     cursor: pointer;
     position: relative;
     transition: background 0.2s;
-    overflow: hidden;
+    background: transparent; /* 移除格子背景 */
+    border-radius: 0 !important; /* 移除圓角 */
 }
 
-/* 【CSS 邊框裁切】: 第一欄去左線，最後一欄去右線 */
+/* 邊際精確裁切：移除最左、最右與最下方的線條 */
 .day-cell:nth-child(7n+1), .weekday:nth-child(7n+1) { border-left: 0 !important; }
 .day-cell:nth-child(7n), .weekday:nth-child(7n) { border-right: 0 !important; }
+.day-cell:nth-last-child(-n+7) { border-bottom: 0 !important; } /* 最後一列去底線 */
 
-.day-cell:active { background: #1a1a1a; }
+.day-cell:active { background: rgba(255,255,255,0.05); }
+.day-cell.today { background: rgba(163,230,53,0.03); }
+.day-cell.today .day-num { color: var(--primary) !important; font-weight: 900; }
+.day-cell.selected { box-shadow: inset 0 0 0 1px var(--primary); z-index: 5; background: rgba(163,230,53,0.05); }
 
 .section-header {
     font-size: 16px;
