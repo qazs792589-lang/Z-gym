@@ -137,6 +137,19 @@ body {
     padding: 20px;
 }
 
+/* 歷史紀錄專用：徹底滿版設計 */
+#view-history .content {
+    padding: 20px 0; /* 上下保留 20px，左右徹底歸零 */
+}
+
+/* 標題與導航區域稍微留一點內縮，避免文字貼死螢幕 */
+.calendar-header {
+    padding: 0 16px 15px 16px; 
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
 /* Cards */
 .glass-card {
     background: var(--card-bg);
@@ -156,50 +169,83 @@ body {
     width: 100%;
 }
 
-/* Calendar - Cross-hatch Grid Optimization */
+/* Calendar - Boxed Grid Style (Enhanced with Gaps) */
 .calendar-grid { 
     display: grid; 
     grid-template-columns: repeat(7, 1fr); 
-    background: transparent;
-    border-bottom: 1px solid #27272a;
+    background: #000; /* 底層純黑 */
+    gap: 1px; /* 用間隙創造黑線 */
+    border-bottom: 1px solid #000;
 }
 .calendar-days-grid {
     display: grid;
     grid-template-columns: repeat(7, 1fr);
-    background: transparent;
+    background: #000; /* 底層純黑 */
+    gap: 1px; /* 用間隙創造黑線 */
+    border-bottom: 1px solid #000;
 }
 .weekday { 
     text-align: center; 
     font-size: 11px; 
-    color: #666; 
+    color: #888; 
     font-weight: 700; 
     padding: 10px 0;
-    border-right: 1px solid #27272a;
+    background: #151517; /* 標題背景 */
 }
 .day-cell {
-    aspect-ratio: 1 / 1.5; 
-    border-right: 1px solid #27272a;
-    border-bottom: 1px solid #27272a;
-    padding: 4px;
+    aspect-ratio: 1 / 1.8; 
+    padding: 6px 4px;
     display: flex;
     flex-direction: column;
-    gap: 2px;
+    gap: 4px;
     cursor: pointer;
     position: relative;
     transition: background 0.2s;
-    background: transparent; /* 移除格子背景 */
-    border-radius: 0 !important; /* 移除圓角 */
+    background: #222; /* 稍微調亮底色，確保黑框（間隙）清晰可見 */
+    border-radius: 0 !important;
 }
 
-/* 邊際精確裁切：移除最左、最右與最下方的線條 */
+.day-cell:active { background: #2a2a2e; }
+.day-cell.today { background: #1a1a1a; position: relative; } 
+.day-cell.today::after { content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 0; border: 2px solid var(--primary); pointer-events: none; }
+.day-cell.today .day-num { color: var(--primary) !important; font-weight: 900; }
+.day-cell.selected { background: #333; position: relative; z-index: 5; }
+.day-cell.selected::after { content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 0; border: 2px solid var(--primary); pointer-events: none; }
+
+.day-num {
+    font-size: 20px !important; /* 日期數字顯著放大 */
+    font-weight: 900;
+    color: var(--text-main);
+    line-height: 1;
+    margin-bottom: 8px;
+    text-align: center; /* 居中看起來更平衡 */
+}
+.day-tags { display: flex; flex-direction: column; gap: 4px; width: 100%; }
+.day-tag {
+    font-size: 10px;
+    font-weight: 800;
+    background: rgba(163,230,53,0.15);
+    color: var(--primary);
+    border-radius: 4px;
+    padding: 3px 4px;
+    line-height: 1.2;
+    width: 95%;
+    margin: 0 auto;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    text-align: center;
+}
+
+/* 邊際精確裁切 */
 .day-cell:nth-child(7n+1), .weekday:nth-child(7n+1) { border-left: 0 !important; }
 .day-cell:nth-child(7n), .weekday:nth-child(7n) { border-right: 0 !important; }
-.day-cell:nth-last-child(-n+7) { border-bottom: 0 !important; } /* 最後一列去底線 */
+.day-cell:nth-last-child(-n+7) { border-bottom: 0 !important; }
 
-.day-cell:active { background: rgba(255,255,255,0.05); }
-.day-cell.today { background: rgba(163,230,53,0.03); }
+.day-cell:active { background: rgba(255,255,255,0.08); }
+.day-cell.today { background: rgba(163,230,53,0.08); } 
 .day-cell.today .day-num { color: var(--primary) !important; font-weight: 900; }
-.day-cell.selected { box-shadow: inset 0 0 0 1px var(--primary); z-index: 5; background: rgba(163,230,53,0.05); }
+.day-cell.selected { box-shadow: inset 0 0 0 1.5px var(--primary); z-index: 5; background: rgba(163,230,53,0.1); }
 
 .section-header {
     font-size: 16px;

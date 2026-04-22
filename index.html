@@ -110,10 +110,10 @@
         <div id="view-history" class="view main-view">
             <div class="content">
                 <!-- Calendar card -->
-                <div class="glass-card calendar-card" style="padding:12px 8px;">
+                <div class="calendar-card">
                     <!-- Month header + nav -->
-                    <div class="flex-between" style="margin-bottom:12px; padding:0 4px;">
-                        <span id="calendar-month-label" style="font-size:18px; font-weight:900; color:var(--text-main);">2025年4月</span>
+                    <div class="calendar-header">
+                        <span id="calendar-month-label">2026年4月</span>
                         <div class="month-selector">
                             <button onclick="app.changeWeeks(-4)">&lt;</button>
                             <button onclick="app.changeWeeks(4)">&gt;</button>
@@ -122,8 +122,9 @@
                     <!-- Weekday headers -->
                     <div class="calendar-grid">
                         <div class="weekday">一</div><div class="weekday">二</div><div class="weekday">三</div><div class="weekday">四</div><div class="weekday">五</div><div class="weekday">六</div><div class="weekday">日</div>
-                        <div id="calendar-days" class="calendar-days"></div>
                     </div>
+                    <div id="calendar-days" class="calendar-days-grid"></div>
+                </div>
                 </div>
 
                 <!-- Stats + Detail side by side -->
