@@ -87,20 +87,14 @@ body {
     min-height: 100vh;
     display: none;
     flex-direction: column;
-    justify-content: flex-start !important; /* 強制內容置頂，解決掉到底部的問題 */
     background: var(--bg-dark);
     overflow: visible;
-    padding-top: 80px;
+    padding-top: 60px;
     padding-bottom: 120px;
 }
 
 .view.active {
     display: flex;
-}
-
-.content {
-    padding: 20px;
-    flex-grow: 0 !important; /* 防止內容塊被撐開到全螢幕 */
 }
 
 .sub-view {
@@ -1231,6 +1225,13 @@ cursor: pointer;
 
 /* History Month Label */
 #calendar-month-label {
+    font-size: 22px !important;
+    font-weight: 900;
+    color: var(--primary) !important;
+    letter-spacing: -1px;
+}
+
+* History Month Label */ #calendar-month-label {
     font-size: 22px !important;
     font-weight: 900;
     color: var(--primary) !important;

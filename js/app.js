@@ -474,7 +474,7 @@ const app = {
         if (!grid) return;
         grid.innerHTML = '';
         const today = new Date();
-        
+
         // 核心邏輯：如果 weeksOffset 為 0 (初始載入)，顯示包含今天的過去 4 週。
         // 如果 offset != 0，則對齊到目標月份的 1 號。
         let baseMonday;
@@ -522,7 +522,7 @@ const app = {
             // 加入 other-month 處理非當月日期
             cell.className = `day-cell ${isToday ? 'today' : ''} ${hasData ? 'has-data' : ''} ${isOtherMonth ? 'other-month' : ''}`;
             cell.dataset.time = d.getTime();
-            
+
             // 日期純數字化：移除月份標記，僅顯示 d.getDate()
             cell.innerHTML = `
                 <div class="day-num">${d.getDate()}</div>
@@ -550,7 +550,7 @@ const app = {
         const dateNavHtml = `
             <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; padding-bottom:10px; border-bottom:1px solid var(--border-color);">
                 <button onclick="app.navigateDetailDay(-1)" style="background:var(--border-color); border:none; color:var(--primary); width:28px; height:28px; border-radius:7px; font-size:17px; cursor:pointer; flex-shrink:0;">‹</button>
-                <span style="font-size:12px; font-weight:900; text-align:center; flex:1; padding:0 4px;">${d.getMonth()+1}/${d.getDate()}（週${WEEKDAY_NAMES[d.getDay()]}）</span>
+                <span style="font-size:12px; font-weight:900; text-align:center; flex:1; padding:0 4px;">${d.getMonth() + 1}/${d.getDate()}（週${WEEKDAY_NAMES[d.getDay()]}）</span>
                 <button onclick="app.navigateDetailDay(1)" style="background:var(--border-color); border:none; color:var(--primary); width:28px; height:28px; border-radius:7px; font-size:17px; cursor:pointer; flex-shrink:0;">›</button>
             </div>
         `;
@@ -678,14 +678,14 @@ const app = {
             const d = new Date(today.getFullYear(), today.getMonth(), today.getDate() - i);
             const r = store.getDayRecord(d);
             if (r.activities.length > 0) {
-                text += `\n📅 ${d.getMonth()+1}/${d.getDate()} (${r.feeling}) ${r.duration}分\n`;
-                text += `類型: ${(r.types||[]).join(', ')||'未設定'}\n`;
+                text += `\n📅 ${d.getMonth() + 1}/${d.getDate()} (${r.feeling}) ${r.duration}分\n`;
+                text += `類型: ${(r.types || []).join(', ') || '未設定'}\n`;
                 r.activities.forEach(a => {
                     const vol = a.sets.reduce((s, x) => s + x.kg * x.reps, 0);
                     totalVol += vol;
                     text += `• ${a.exName}: ${a.sets.length}組 / 容量${vol}kg\n`;
                     a.sets.forEach((s, i) => {
-                        text += `   ${i+1}. ${s.kg}kg × ${s.reps}下${s.note ? ` (${s.note})` : ''}\n`;
+                        text += `   ${i + 1}. ${s.kg}kg × ${s.reps}下${s.note ? ` (${s.note})` : ''}\n`;
                     });
                 });
             }
