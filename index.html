@@ -1,21 +1,27 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
+
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>Fit Log</title>
     <link rel="manifest" href="./manifest.json">
     <link rel="stylesheet" href="./css/style.css">
 </head>
+
 <body>
     <div id="app">
         <!-- Header -->
         <header id="main-header">
-            <div class="logo" style="position:relative; display:flex; align-items:center; justify-content:center; width:130px;">
-                <span style="position:relative; z-index:2; font-size:32px; font-weight:900; text-shadow: 0 2px 10px rgba(0,0,0,0.8);">Gym</span>
-                <span class="highlight" style="position:absolute; font-size:80px; z-index:1; opacity:1; font-style:italic; pointer-events:none; left:50%; top:50%; transform:translate(-50%, -50%);">Z</span>
+            <div class="logo"
+                style="position:relative; display:flex; align-items:center; justify-content:center; width:130px;">
+                <span
+                    style="position:relative; z-index:2; font-size:32px; font-weight:900; text-shadow: 0 2px 10px rgba(0,0,0,0.8);">Gym</span>
+                <span class="highlight"
+                    style="position:absolute; font-size:80px; z-index:1; opacity:1; font-style:italic; pointer-events:none; left:50%; top:50%; transform:translate(-50%, -50%);">Z</span>
             </div>
             <span class="version-badge">v2.1</span>
         </header>
@@ -46,31 +52,40 @@
                 <!-- Date + Types + Duration row -->
                 <div class="glass-card" style="position:relative">
                     <!-- Date nav row -->
-                    <div style="display:flex; align-items:center; margin-bottom:16px; border-bottom:1px solid var(--border-color); padding-bottom:16px; gap:8px;">
-                        <button onclick="app.changeViewDay(-1)" style="background:var(--border-color); border:none; color:var(--primary); width:40px; height:40px; border-radius:10px; font-size:22px; cursor:pointer; flex-shrink:0;">‹</button>
+                    <div
+                        style="display:flex; align-items:center; margin-bottom:16px; border-bottom:1px solid var(--border-color); padding-bottom:16px; gap:8px;">
+                        <button onclick="app.changeViewDay(-1)"
+                            style="background:var(--border-color); border:none; color:var(--primary); width:40px; height:40px; border-radius:10px; font-size:22px; cursor:pointer; flex-shrink:0;">‹</button>
                         <div style="flex:1; display:flex; flex-direction:column; align-items:center; gap:4px;">
-                            <input type="date" id="today-date-badge" class="date-input-header" onchange="app.changeDateByPicker(this.value)">
-                            <div id="back-to-today-btn" style="display:none; background:var(--primary); color:#000; padding:3px 12px; border-radius:8px; font-size:12px; font-weight:bold; cursor:pointer;" onclick="app.returnToToday()">🌟 回今日</div>
+                            <input type="date" id="today-date-badge" class="date-input-header"
+                                onchange="app.changeDateByPicker(this.value)">
+                            <div id="back-to-today-btn"
+                                style="display:none; background:var(--primary); color:#000; padding:3px 12px; border-radius:8px; font-size:12px; font-weight:bold; cursor:pointer;"
+                                onclick="app.returnToToday()">🌟 回今日</div>
                         </div>
-                        <button id="fwd-day-btn" onclick="app.changeViewDay(1)" style="background:var(--border-color); border:none; color:var(--primary); width:40px; height:40px; border-radius:10px; font-size:22px; cursor:pointer; flex-shrink:0;">›</button>
+                        <button id="fwd-day-btn" onclick="app.changeViewDay(1)"
+                            style="background:var(--border-color); border:none; color:var(--primary); width:40px; height:40px; border-radius:10px; font-size:22px; cursor:pointer; flex-shrink:0;">›</button>
                     </div>
 
-                        <div style="display:flex; justify-content:space-between; align-items:flex-start;">
-                            <!-- Left: Types -->
-                            <div style="flex:1;">
-                                <label style="margin-bottom:10px; display:block;">訓練類型</label>
-                                <div class="chip-group" id="training-types-container">
-                                    <!-- Chips by JS -->
-                                </div>
-                            </div>
-                            <!-- Right: Duration -->
-                            <div style="display:flex; flex-direction:column; align-items:flex-end; gap:6px; cursor:pointer; margin-left:15px; flex-shrink:0;" onclick="app.openTimePicker()">
-                                <label style="margin-bottom:0; cursor:pointer; color:var(--text-sub); font-size:13px; font-weight:600;">時長</label>
-                                <div style="background:rgba(163,230,53,0.1); border:1px solid var(--primary); padding:4px 10px; border-radius:8px; font-weight:800; color:var(--primary); font-size:14px;">
-                                    <span id="lbl-duration">60</span><span style="font-size:11px; margin-left:2px;">分</span>
-                                </div>
+                    <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+                        <!-- Left: Types -->
+                        <div style="flex:1;">
+                            <label style="margin-bottom:10px; display:block;">訓練類型</label>
+                            <div class="chip-group" id="training-types-container">
+                                <!-- Chips by JS -->
                             </div>
                         </div>
+                        <!-- Right: Duration -->
+                        <div style="display:flex; flex-direction:column; align-items:flex-end; gap:6px; cursor:pointer; margin-left:15px; flex-shrink:0;"
+                            onclick="app.openTimePicker()">
+                            <label
+                                style="margin-bottom:0; cursor:pointer; color:var(--text-sub); font-size:13px; font-weight:600;">時長</label>
+                            <div
+                                style="background:rgba(163,230,53,0.1); border:1px solid var(--primary); padding:4px 10px; border-radius:8px; font-weight:800; color:var(--primary); font-size:14px;">
+                                <span id="lbl-duration">60</span><span style="font-size:11px; margin-left:2px;">分</span>
+                            </div>
+                        </div>
+                    </div>
 
                     <div class="form-group" style="margin-top:16px; margin-bottom:0;">
                         <label>整體感受</label>
@@ -97,10 +112,13 @@
                 <!-- Notes -->
                 <div class="glass-card">
                     <div class="section-header">備註</div>
-                    <textarea id="input-notes" class="summary-textarea" style="height:100px; margin-top:0;" placeholder="記錄當天的特殊狀況、受傷情況或其他補充..."></textarea>
+                    <textarea id="input-notes" class="summary-textarea" style="height:100px; margin-top:0;"
+                        placeholder="記錄當天的特殊狀況、受傷情況或其他補充..."></textarea>
                 </div>
-                
-                <button class="btn-full-green" style="margin-top:10px; margin-bottom:30px; font-size:18px; display:flex; justify-content:center; align-items:center; gap:8px;" onclick="app.manualSave()">
+
+                <button class="btn-full-green"
+                    style="margin-top:10px; margin-bottom:30px; font-size:18px; display:flex; justify-content:center; align-items:center; gap:8px;"
+                    onclick="app.manualSave()">
                     <span>💾</span> 儲存當天所有紀錄
                 </button>
             </div>
@@ -121,206 +139,231 @@
                     </div>
                     <!-- Weekday headers -->
                     <div class="calendar-grid">
-                        <div class="weekday">一</div><div class="weekday">二</div><div class="weekday">三</div><div class="weekday">四</div><div class="weekday">五</div><div class="weekday">六</div><div class="weekday">日</div>
+                        <div class="weekday">一</div>
+                        <div class="weekday">二</div>
+                        <div class="weekday">三</div>
+                        <div class="weekday">四</div>
+                        <div class="weekday">五</div>
+                        <div class="weekday">六</div>
+                        <div class="weekday">日</div>
                     </div>
                     <div id="calendar-days" class="calendar-days-grid"></div>
                 </div>
+            </div>
+
+            <!-- Stats + Detail side by side -->
+            <div style="display:flex; gap:10px; align-items:flex-start;">
+                <!-- Stats 2x2 on left -->
+                <div class="glass-card" style="flex-shrink:0; width:42%; padding:12px;">
+                    <div
+                        style="font-size:10px; color:#666; font-weight:700; text-transform:uppercase; letter-spacing:.05em; margin-bottom:10px;">
+                        訓練統計</div>
+                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+                        <div class="stat-box"><span class="highlight stat-val" id="hist-week-days">0</span><span
+                                class="stat-label">本週天數</span></div>
+                        <div class="stat-box"><span class="highlight stat-val" id="hist-week-time">0</span><span
+                                class="stat-label">本週分鐘</span></div>
+                        <div class="stat-box"><span class="highlight stat-val" id="hist-month-days">0</span><span
+                                class="stat-label">本月天數</span></div>
+                        <div class="stat-box"><span class="highlight stat-val" id="hist-month-time">0</span><span
+                                class="stat-label">本月分鐘</span></div>
+                    </div>
+                </div>
+                <!-- Day detail on right (scrollable) -->
+                <div class="glass-card" id="day-detail-panel" style="flex:1; min-height:150px; padding:12px;">
+                    <div id="day-detail-content" class="detail-empty">
+                        <span style="font-size:18px;">📅</span>
+                        <span style="font-size:12px;">點選日期查看</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- SUMMARY VIEW -->
+    <div id="view-summary" class="view main-view">
+        <div class="content">
+            <button class="btn-full-green" style="margin-bottom:16px; font-size:18px; padding:20px;"
+                onclick="app.copySummary()">📋 複製總結報告</button>
+
+            <div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:10px; margin-bottom:16px;">
+                <button class="btn-outline-green w-100" id="btn-sum-today"
+                    onclick="app.generateSummary('today')">今日</button>
+                <button class="btn-outline-green w-100" id="btn-sum-week"
+                    onclick="app.generateSummary('week')">本週</button>
+                <button class="btn-outline-green w-100" id="btn-sum-month"
+                    onclick="app.generateSummary('month')">本月</button>
+            </div>
+
+            <div class="glass-card" style="padding:15px; border:none; background:transparent;">
+                <div style="font-weight:800; font-size:16px; margin-bottom:12px; color:var(--text-sub);">教練總結內容</div>
+                <div id="ai-summary-text" class="summary-display-box">產生的資料將顯示於此...</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- SETTINGS VIEW -->
+    <div id="view-settings" class="view main-view">
+        <div class="content">
+            <div class="form-group" style="margin-top:16px;">
+                <label style="color:#888;">資料庫管理</label>
+                <button class="btn-outline-green w-100" style="padding:14px; margin-top:8px; font-size:16px;"
+                    onclick="app.navToSub('view-manage-db')">管理類型、部位與動作</button>
+            </div>
+            <hr class="divider">
+            <div class="form-group">
+                <label style="color:#888;">個人資料</label>
+                <div style="display:flex;gap:16px;margin-top:10px">
+                    <div class="flex-1">
+                        <span style="font-size:12px;color:#888;">體重 (kg)</span>
+                        <input type="number" id="setting-weight" class="custom-input">
+                    </div>
+                    <div class="flex-1">
+                        <span style="font-size:12px;color:#888;">身高 (cm)</span>
+                        <input type="number" id="setting-height" class="custom-input">
+                    </div>
+                </div>
+            </div>
+            <button class="btn-full-green" onclick="app.saveSettings()">儲存設定</button>
+        </div>
+    </div>
+
+    <!-- BOTTOM NAV -->
+    <nav id="bottom-bar">
+        <div class="nav-item active" onclick="app.switchTab('view-record', this)">
+            <div class="icon">📋</div><span>記錄</span>
+        </div>
+        <div class="nav-item" onclick="app.switchTab('view-history', this)">
+            <div class="icon">📈</div><span>歷史</span>
+        </div>
+        <div class="nav-item" onclick="app.switchTab('view-summary', this)">
+            <div class="icon">📝</div><span>摘要</span>
+        </div>
+        <div class="nav-item" onclick="app.switchTab('view-settings', this)">
+            <div class="icon">⚙️</div><span>設定</span>
+        </div>
+    </nav>
+
+    <!-- SUB VIEW: CATEGORY PICKER -->
+    <div id="view-exercise-picker" class="view sub-view">
+        <header>
+            <button class="btn-text" onclick="app.closeSubView()">← 返回</button>
+            <h2>選擇部位</h2>
+        </header>
+        <div class="content">
+            <div class="list" id="picker-cat-list"></div>
+            <div style="display:flex;gap:10px;margin-top:16px;">
+                <input type="text" id="new-cat-input" class="custom-input" placeholder="新增自訂部位...">
+                <button class="btn-outline-green" style="padding:10px 15px; white-space:nowrap;"
+                    onclick="app.addCustomCategory()">新增</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- SUB VIEW: EXERCISE LIST -->
+    <div id="view-exercise-list" class="view sub-view">
+        <header>
+            <button class="btn-text" onclick="app.backToPicker()">← 部位</button>
+            <h2 id="current-cat-title">動作</h2>
+        </header>
+        <div class="content">
+            <div class="list" id="picker-ex-list"></div>
+            <div style="display:flex;gap:10px;margin-top:16px;">
+                <input type="text" id="new-ex-input" class="custom-input" placeholder="新增自訂動作...">
+                <button class="btn-outline-green" style="padding:10px 15px; white-space:nowrap;"
+                    onclick="app.addCustomExercise()">新增</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- SUB VIEW: MANAGE DB -->
+    <div id="view-manage-db" class="view sub-view">
+        <header>
+            <button class="btn-text" onclick="app.closeSubView()">← 返回設定</button>
+            <h2>類型、部位與動作</h2>
+        </header>
+        <div class="content" id="manage-db-list"></div>
+    </div>
+
+    <!-- SUB VIEW: WORKOUT RECORDER (single page) -->
+    <div id="view-workout" class="view sub-view">
+        <header>
+            <button class="btn-text" onclick="app.closeSubView()">← 返回</button>
+            <h2 id="workout-title">紀錄動作</h2>
+        </header>
+        <div class="content workout-content">
+
+            <!-- Today's sets (compact summary) -->
+            <div class="glass-card workout-log-card">
+                <div class="workout-log-title">今日已紀錄</div>
+                <div id="workout-sets-list" class="workout-log-empty">暫無紀錄</div>
+            </div>
+
+            <!-- Weight + Reps side by side -->
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+
+                <!-- Weight -->
+                <div class="glass-card"
+                    style="padding:14px; display:flex; flex-direction:column; align-items:center; justify-content:center;">
+                    <div class="field-label" style="margin-bottom:8px;">重量 (KG)</div>
+                    <input type="number" id="input-kg" class="big-number-input" placeholder="0" inputmode="decimal"
+                        step="0.5" style="font-size:42px;">
+                    <div class="quick-kg-row" id="quick-kg-row" style="justify-content:center; margin-top:10px;"></div>
                 </div>
 
-                <!-- Stats + Detail side by side -->
-                <div style="display:flex; gap:10px; align-items:flex-start;">
-                    <!-- Stats 2x2 on left -->
-                    <div class="glass-card" style="flex-shrink:0; width:42%; padding:12px;">
-                        <div style="font-size:10px; color:#666; font-weight:700; text-transform:uppercase; letter-spacing:.05em; margin-bottom:10px;">訓練統計</div>
-                        <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
-                            <div class="stat-box"><span class="highlight stat-val" id="hist-week-days">0</span><span class="stat-label">本週天數</span></div>
-                            <div class="stat-box"><span class="highlight stat-val" id="hist-week-time">0</span><span class="stat-label">本週分鐘</span></div>
-                            <div class="stat-box"><span class="highlight stat-val" id="hist-month-days">0</span><span class="stat-label">本月天數</span></div>
-                            <div class="stat-box"><span class="highlight stat-val" id="hist-month-time">0</span><span class="stat-label">本月分鐘</span></div>
+                <!-- Reps wheel -->
+                <div class="glass-card" style="padding:14px; text-align:center;">
+                    <div class="field-label" style="margin-bottom:4px;">次數 — <span id="reps-display" class="highlight"
+                            style="font-size:16px; font-weight:900;">10</span> 下</div>
+                    <div class="inline-wheel-container">
+                        <div class="inline-wheel-bar"></div>
+                        <div class="inline-wheel-scroller" id="reps-wheel-scroller">
+                            <div style="height:60px"></div>
+                            <div id="reps-wheel-inner"></div>
+                            <div style="height:60px"></div>
                         </div>
                     </div>
-                    <!-- Day detail on right (scrollable) -->
-                    <div class="glass-card" id="day-detail-panel" style="flex:1; min-height:150px; padding:12px;">
-                        <div id="day-detail-content" class="detail-empty">
-                            <span style="font-size:18px;">📅</span>
-                            <span style="font-size:12px;">點選日期查看</span>
-                        </div>
-                    </div>
+                </div>
+
+            </div>
+
+            <!-- Notes -->
+            <div class="glass-card">
+                <div class="field-label">本組備註（選填）</div>
+                <textarea id="workout-notes" class="summary-textarea"
+                    style="height:60px; margin-top:8px; font-size:14px;" placeholder="例如：感覺肌肉很緊..."></textarea>
+            </div>
+
+            <!-- Action buttons -->
+            <div style="display:flex; gap:12px; padding-bottom:10px;">
+                <button class="btn-outline-green" style="flex:1; padding:16px; font-weight:bold; font-size:15px;"
+                    onclick="app.commitSet(false)">＋ 完成本組</button>
+                <button class="btn-full-green" style="flex:1; font-size:15px;" onclick="app.commitSet(true)">✓
+                    結束動作</button>
+            </div>
+
+        </div>
+    </div>
+
+
+    <!-- WHEEL PICKER MODAL (time) -->
+    <div id="wheel-modal" class="modal" onclick="if(event.target.id==='wheel-modal') app.closeWheels()">
+        <div class="wheel-panel">
+            <div class="wheel-header">
+                <button class="btn-text" style="color:#888" onclick="app.closeWheels()">取消</button>
+                <h3 id="wheel-title">設定</h3>
+                <button class="btn-text highlight" onclick="app.confirmWheel()">確定</button>
+            </div>
+            <div class="wheel-container">
+                <div class="wheel-selection-bar"></div>
+                <div class="wheel-scroller" id="wheel-scroller" onscroll="app.handleWheelScroll()">
+                    <div style="height:80px"></div>
+                    <div id="wheel-items-inner"></div>
+                    <div style="height:80px"></div>
                 </div>
             </div>
         </div>
-
-        <!-- SUMMARY VIEW -->
-        <div id="view-summary" class="view main-view">
-            <div class="content">
-                <button class="btn-full-green" style="margin-bottom:16px; font-size:18px; padding:20px;" onclick="app.copySummary()">📋 複製總結報告</button>
-
-                <div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:10px; margin-bottom:16px;">
-                    <button class="btn-outline-green w-100" id="btn-sum-today" onclick="app.generateSummary('today')">今日</button>
-                    <button class="btn-outline-green w-100" id="btn-sum-week" onclick="app.generateSummary('week')">本週</button>
-                    <button class="btn-outline-green w-100" id="btn-sum-month" onclick="app.generateSummary('month')">本月</button>
-                </div>
-                
-                <div class="glass-card" style="padding:15px; border:none; background:transparent;">
-                    <div style="font-weight:800; font-size:16px; margin-bottom:12px; color:var(--text-sub);">教練總結內容</div>
-                    <div id="ai-summary-text" class="summary-display-box">產生的資料將顯示於此...</div>
-                </div>
-            </div>
-        </div>
-
-        <!-- SETTINGS VIEW -->
-        <div id="view-settings" class="view main-view">
-            <div class="content">
-                <div class="form-group" style="margin-top:16px;">
-                    <label style="color:#888;">資料庫管理</label>
-                    <button class="btn-outline-green w-100" style="padding:14px; margin-top:8px; font-size:16px;" onclick="app.navToSub('view-manage-db')">管理類型、部位與動作</button>
-                </div>
-                <hr class="divider">
-                <div class="form-group">
-                    <label style="color:#888;">個人資料</label>
-                    <div style="display:flex;gap:16px;margin-top:10px">
-                        <div class="flex-1">
-                            <span style="font-size:12px;color:#888;">體重 (kg)</span>
-                            <input type="number" id="setting-weight" class="custom-input">
-                        </div>
-                        <div class="flex-1">
-                            <span style="font-size:12px;color:#888;">身高 (cm)</span>
-                            <input type="number" id="setting-height" class="custom-input">
-                        </div>
-                    </div>
-                </div>
-                <button class="btn-full-green" onclick="app.saveSettings()">儲存設定</button>
-            </div>
-        </div>
-
-        <!-- BOTTOM NAV -->
-        <nav id="bottom-bar">
-            <div class="nav-item active" onclick="app.switchTab('view-record', this)">
-                <div class="icon">📋</div><span>記錄</span>
-            </div>
-            <div class="nav-item" onclick="app.switchTab('view-history', this)">
-                <div class="icon">📈</div><span>歷史</span>
-            </div>
-            <div class="nav-item" onclick="app.switchTab('view-summary', this)">
-                <div class="icon">📝</div><span>摘要</span>
-            </div>
-            <div class="nav-item" onclick="app.switchTab('view-settings', this)">
-                <div class="icon">⚙️</div><span>設定</span>
-            </div>
-        </nav>
-
-        <!-- SUB VIEW: CATEGORY PICKER -->
-        <div id="view-exercise-picker" class="view sub-view">
-            <header>
-                <button class="btn-text" onclick="app.closeSubView()">← 返回</button>
-                <h2>選擇部位</h2>
-            </header>
-            <div class="content">
-                <div class="list" id="picker-cat-list"></div>
-                <div style="display:flex;gap:10px;margin-top:16px;">
-                    <input type="text" id="new-cat-input" class="custom-input" placeholder="新增自訂部位...">
-                    <button class="btn-outline-green" style="padding:10px 15px; white-space:nowrap;" onclick="app.addCustomCategory()">新增</button>
-                </div>
-            </div>
-        </div>
-
-        <!-- SUB VIEW: EXERCISE LIST -->
-        <div id="view-exercise-list" class="view sub-view">
-            <header>
-                <button class="btn-text" onclick="app.backToPicker()">← 部位</button>
-                <h2 id="current-cat-title">動作</h2>
-            </header>
-            <div class="content">
-                <div class="list" id="picker-ex-list"></div>
-                <div style="display:flex;gap:10px;margin-top:16px;">
-                    <input type="text" id="new-ex-input" class="custom-input" placeholder="新增自訂動作...">
-                    <button class="btn-outline-green" style="padding:10px 15px; white-space:nowrap;" onclick="app.addCustomExercise()">新增</button>
-                </div>
-            </div>
-        </div>
-
-        <!-- SUB VIEW: MANAGE DB -->
-        <div id="view-manage-db" class="view sub-view">
-            <header>
-                <button class="btn-text" onclick="app.closeSubView()">← 返回設定</button>
-                <h2>類型、部位與動作</h2>
-            </header>
-            <div class="content" id="manage-db-list"></div>
-        </div>
-
-        <!-- SUB VIEW: WORKOUT RECORDER (single page) -->
-        <div id="view-workout" class="view sub-view">
-            <header>
-                <button class="btn-text" onclick="app.closeSubView()">← 返回</button>
-                <h2 id="workout-title">紀錄動作</h2>
-            </header>
-            <div class="content workout-content">
-
-                <!-- Today's sets (compact summary) -->
-                <div class="glass-card workout-log-card">
-                    <div class="workout-log-title">今日已紀錄</div>
-                    <div id="workout-sets-list" class="workout-log-empty">暫無紀錄</div>
-                </div>
-
-                <!-- Weight + Reps side by side -->
-                <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
-
-                    <!-- Weight -->
-                    <div class="glass-card" style="padding:14px; display:flex; flex-direction:column; align-items:center; justify-content:center;">
-                        <div class="field-label" style="margin-bottom:8px;">重量 (KG)</div>
-                        <input type="number" id="input-kg" class="big-number-input" placeholder="0" inputmode="decimal" step="0.5" style="font-size:42px;">
-                        <div class="quick-kg-row" id="quick-kg-row" style="justify-content:center; margin-top:10px;"></div>
-                    </div>
-
-                    <!-- Reps wheel -->
-                    <div class="glass-card" style="padding:14px; text-align:center;">
-                        <div class="field-label" style="margin-bottom:4px;">次數 — <span id="reps-display" class="highlight" style="font-size:16px; font-weight:900;">10</span> 下</div>
-                        <div class="inline-wheel-container">
-                            <div class="inline-wheel-bar"></div>
-                            <div class="inline-wheel-scroller" id="reps-wheel-scroller">
-                                <div style="height:60px"></div>
-                                <div id="reps-wheel-inner"></div>
-                                <div style="height:60px"></div>
-                            </div>
-                        </div>
-                    </div>
-
-                </div>
-
-                <!-- Notes -->
-                <div class="glass-card">
-                    <div class="field-label">本組備註（選填）</div>
-                    <textarea id="workout-notes" class="summary-textarea" style="height:60px; margin-top:8px; font-size:14px;" placeholder="例如：感覺肌肉很緊..."></textarea>
-                </div>
-
-                <!-- Action buttons -->
-                <div style="display:flex; gap:12px; padding-bottom:10px;">
-                    <button class="btn-outline-green" style="flex:1; padding:16px; font-weight:bold; font-size:15px;" onclick="app.commitSet(false)">＋ 完成本組</button>
-                    <button class="btn-full-green" style="flex:1; font-size:15px;" onclick="app.commitSet(true)">✓ 結束動作</button>
-                </div>
-
-            </div>
-        </div>
-
-
-        <!-- WHEEL PICKER MODAL (time) -->
-        <div id="wheel-modal" class="modal" onclick="if(event.target.id==='wheel-modal') app.closeWheels()">
-            <div class="wheel-panel">
-                <div class="wheel-header">
-                    <button class="btn-text" style="color:#888" onclick="app.closeWheels()">取消</button>
-                    <h3 id="wheel-title">設定</h3>
-                    <button class="btn-text highlight" onclick="app.confirmWheel()">確定</button>
-                </div>
-                <div class="wheel-container">
-                    <div class="wheel-selection-bar"></div>
-                    <div class="wheel-scroller" id="wheel-scroller" onscroll="app.handleWheelScroll()">
-                        <div style="height:80px"></div>
-                        <div id="wheel-items-inner"></div>
-                        <div style="height:80px"></div>
-                    </div>
-                </div>
-            </div>
-        </div>
+    </div>
 
     </div>
 
@@ -332,4 +375,5 @@
         }
     </script>
 </body>
+
 </html>
