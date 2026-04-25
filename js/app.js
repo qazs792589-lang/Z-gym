@@ -624,10 +624,8 @@ const app = {
             let tagsHtml = '';
             if (hasData) {
                 const cats = [...new Set(record.activities.map(a => a.catName))];
-                const exCount = record.activities.reduce((s, a) => s + a.sets.length, 0);
                 tagsHtml = `<div class="day-tags">` +
-                    cats.slice(0, 3).map(c => `<div class="day-tag">${c}</div>`).join('') +
-                    `<div class="day-tag" style="color:inherit; opacity:.5; font-weight:600;">${exCount}組</div>` +
+                    cats.slice(0, 4).map(c => `<div class="day-tag">${c}</div>`).join('') +
                     `</div>`;
             }
 
