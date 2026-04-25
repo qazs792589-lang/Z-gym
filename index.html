@@ -16,7 +16,8 @@
     <div id="app">
         <!-- Header -->
         <header id="main-header">
-            <img src="./img/Gemini_Generated_Image_8g3jmq8g3jmq8g3j.png" alt="Logo" style="height: 60px; width: auto; object-fit: contain;">
+            <img src="./img/Gemini_Generated_Image_8g3jmq8g3jmq8g3j.png" alt="Logo"
+                style="height: 60px; width: auto; object-fit: contain;">
             <span class="version-badge">v2.1</span>
         </header>
 
@@ -296,26 +297,58 @@
                 <!-- Weight + Reps side by side -->
                 <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
 
-                    <!-- Weight -->
-                    <div class="glass-card"
-                        style="padding:14px; display:flex; flex-direction:column; align-items:center; justify-content:center;">
-                        <div class="field-label" style="margin-bottom:8px;">重量 (KG)</div>
-                        <input type="number" id="input-kg" class="big-number-input" placeholder="0" inputmode="decimal"
-                            step="0.5" style="font-size:42px;">
-                        <div class="quick-kg-row" id="quick-kg-row" style="justify-content:center; margin-top:10px;">
+                    <!-- Field 1 (Weight or Train Time) -->
+                    <div class="glass-card" style="padding:14px; position:relative;">
+                        
+                        <!-- Strength Mode -->
+                        <div id="input-kg-container">
+                            <div class="field-label" id="label-field1" style="margin-bottom:8px; text-align:center;">重量 (KG)</div>
+                            <input type="number" id="input-kg" class="big-number-input" placeholder="0" inputmode="decimal"
+                                step="0.5" style="font-size:42px;">
+                            <div class="quick-kg-row" id="quick-kg-row" style="justify-content:center; margin-top:10px;"></div>
+                        </div>
+
+                        <!-- Cardio Mode -->
+                        <div id="train-wheel-container" style="display:none;">
+                            <div style="display:flex; align-items:center; gap:8px;">
+                                <div style="flex:1; display:flex; flex-direction:column; align-items:center;">
+                                    <div class="field-label" id="label-field1-cardio" style="margin-bottom:8px;">訓練時間</div>
+                                    <div class="inline-wheel-container" style="width:100%;">
+                                        <div class="inline-wheel-bar"></div>
+                                        <div class="inline-wheel-scroller" id="train-wheel-scroller">
+                                            <div style="height:60px"></div>
+                                            <div id="train-wheel-inner"></div>
+                                            <div style="height:60px"></div>
+                                        </div>
+                                    </div>
+                                    <div style="text-align:center; margin-top:8px; font-weight:900; color:var(--primary);"><span id="train-display">30</span> <span class="unit-text">秒</span></div>
+                                </div>
+                                <div class="unit-selector" style="margin-top:-20px;">
+                                    <button id="btn-unit-1-sec" class="unit-btn active" onclick="app.setUnit(1, '秒')">秒</button>
+                                    <button id="btn-unit-1-min" class="unit-btn" onclick="app.setUnit(1, '分')">分</button>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
-                    <!-- Reps wheel -->
-                    <div class="glass-card" style="padding:14px; text-align:center;">
-                        <div class="field-label" style="margin-bottom:4px;">次數 — <span id="reps-display"
-                                class="highlight" style="font-size:16px; font-weight:900;">10</span> 下</div>
-                        <div class="inline-wheel-container">
-                            <div class="inline-wheel-bar"></div>
-                            <div class="inline-wheel-scroller" id="reps-wheel-scroller">
-                                <div style="height:60px"></div>
-                                <div id="reps-wheel-inner"></div>
-                                <div style="height:60px"></div>
+                    <!-- Field 2 (Reps or Rest Time) -->
+                    <div class="glass-card" style="padding:14px; position:relative;">
+                        <div style="display:flex; align-items:center; gap:8px;">
+                            <div style="flex:1; display:flex; flex-direction:column; align-items:center;">
+                                <div class="field-label" id="label-field2-title" style="margin-bottom:8px;">次數</div>
+                                <div class="inline-wheel-container" style="width:100%;">
+                                    <div class="inline-wheel-bar"></div>
+                                    <div class="inline-wheel-scroller" id="reps-wheel-scroller">
+                                        <div style="height:60px"></div>
+                                        <div id="reps-wheel-inner"></div>
+                                        <div style="height:60px"></div>
+                                    </div>
+                                </div>
+                                <div style="text-align:center; margin-top:8px; font-weight:900; color:var(--primary);"><span id="reps-display">10</span> <span id="unit-field2">下</span></div>
+                            </div>
+                            <div id="unit-selector-2" class="unit-selector" style="display:none; margin-top:-20px;">
+                                <button id="btn-unit-2-sec" class="unit-btn active" onclick="app.setUnit(2, '秒')">秒</button>
+                                <button id="btn-unit-2-min" class="unit-btn" onclick="app.setUnit(2, '分')">分</button>
                             </div>
                         </div>
                     </div>

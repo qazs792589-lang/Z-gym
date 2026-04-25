@@ -4,10 +4,14 @@ const app = {
         currentCat: null,
         currentEx: null,
         repsValue: 10,
+        trainValue: 30,
+        trainUnit: '秒',
+        restUnit: '秒',
         weeksOffset: 0,
         wheelCallback: null,
         wheelValue: 0,
         repsScrollTimeout: null,
+        trainScrollTimeout: null,
         detailDate: null
     },
 
@@ -16,6 +20,7 @@ const app = {
         this.renderRecordView();
         this.renderSettingsView();
         this.initRepsWheel();
+        this.initTrainWheel();
     },
 
     // ─── NAVIGATION ──────────────────────────────────────────
@@ -109,8 +114,11 @@ const app = {
     updateStats(record) {
         let sets = 0, kg = 0;
         (record.activities || []).forEach(a => {
+            const isCardio = a.catName === '有氧';
             sets += a.sets.length;
-            a.sets.forEach(s => kg += s.kg * s.reps);
+            if (!isCardio) {
+                a.sets.forEach(s => kg += s.kg * s.reps);
+            }
         });
         document.getElementById('stat-actions').innerText = record.activities.length;
         document.getElementById('stat-sets').innerText = sets;
@@ -127,6 +135,25 @@ const app = {
         }).join('');
     },
 
+    setUnit(idx, unit) {
+        if (idx === 1) {
+            this.state.trainUnit = unit;
+            document.getElementById('btn-unit-1-sec').classList.toggle('active', unit === '秒');
+            document.getElementById('btn-unit-1-min').classList.toggle('active', unit === '分');
+            document.querySelectorAll('#train-wheel-container .unit-text').forEach(el => el.innerText = unit);
+        } else {
+            this.state.restUnit = unit;
+            document.getElementById('btn-unit-2-sec').classList.toggle('active', unit === '秒');
+            document.getElementById('btn-unit-2-min').classList.toggle('active', unit === '分');
+            document.getElementById('unit-field2').innerText = unit;
+        }
+    },
+
+    toggleUnit(idx) {
+        const current = idx === 1 ? this.state.trainUnit : this.state.restUnit;
+        this.setUnit(idx, current === '秒' ? '分' : '秒');
+    },
+    
     toggleType(type) {
         let record = store.getDayRecord(this.state.viewDate);
         if (!record.types) record.types = [];
@@ -157,17 +184,18 @@ const app = {
                 groups[s.kg].push(s);
             });
 
-            // Sort weights descending (heaviest first)
+            const isCardio = act.catName === '有氧';
             const sortedKgs = Object.keys(groups).map(Number).sort((a, b) => b - a);
 
             const groupsHtml = sortedKgs.map(kg => {
                 const repsBadges = groups[kg].map(s => {
-                    const label = `${s.reps}下${s.note ? ' 📝' : ''}`;
+                    const label = isCardio ? `${s.reps}秒${s.note ? ' 📝' : ''}` : `${s.reps}下${s.note ? ' 📝' : ''}`;
                     return `<div class="rep-badge" title="${s.note || ''}" onclick="app.deleteSet('${act.exId}', '${s.id}')">${label}</div>`;
                 }).join('');
+                const weightLabel = isCardio ? `${kg}秒` : `${kg}kg`;
                 return `
                 <div class="weight-group-row">
-                    <div class="weight-group-label">${kg}kg</div>
+                    <div class="weight-group-label">${weightLabel}</div>
                     <div class="weight-group-reps">${repsBadges}</div>
                 </div>`;
             }).join('');
@@ -177,7 +205,7 @@ const app = {
                 <div class="action-item-header">
                     <span class="action-item-name">${act.exName} <span style="font-size:12px; color:var(--text-sub); font-weight:normal; opacity:0.8; margin-left:10px;">[${act.catName || '未分類'}]</span></span>
                     <div style="display:flex; gap:10px; align-items:center;">
-                        <button class="btn-outline-green" style="padding:5px 12px; font-size:13px;" onclick="app.openWorkout('${act.exId}', '${act.exName}')">繼續</button>
+                        <button class="btn-outline-green" style="padding:5px 12px; font-size:13px;" onclick="app.openWorkout('${act.exId}', '${act.exName}', '${act.catName || ''}')">繼續</button>
                         <span style="color:var(--danger); font-size:12px; cursor:pointer;" onclick="app.deleteActivity('${act.exId}')">刪除</span>
                     </div>
                 </div>
@@ -242,20 +270,39 @@ const app = {
     },
 
     // ─── WORKOUT (single page) ───────────────────────────────
-    openWorkout(exId, exName) {
+    openWorkout(exId, exName, catName = '') {
         this.state.currentEx = { id: exId, name: exName };
         document.getElementById('workout-title').innerText = exName;
 
         // Today's sets for this exercise
         const record = store.getDayRecord(this.state.viewDate);
         const act = record.activities.find(a => a.exId === exId);
+        
+        // If we have an existing activity or a passed catName, sync the currentCat
+        if (catName) {
+            this.state.currentCat = { id: '', name: catName };
+        } else if (act && act.catName) {
+            this.state.currentCat = { id: act.catId || '', name: act.catName };
+        }
 
-        // Quick KG buttons from used weights
-        const usedKgs = act ? [...new Set(act.sets.map(s => s.kg))].sort((a, b) => b - a) : [];
-        const quickRow = document.getElementById('quick-kg-row');
-        quickRow.innerHTML = usedKgs.length
-            ? usedKgs.map(k => `<button class="quick-kg-btn" onclick="document.getElementById('input-kg').value=${k}">${k}kg</button>`).join('')
-            : '';
+        // Dynamic labels for Cardio vs Strength
+        const isCardio = this.state.currentCat && this.state.currentCat.name === '有氧';
+        const label1 = isCardio ? '訓練時間' : '重量 (KG)';
+        document.getElementById('label-field1').innerText = label1;
+        const cardioLabel1 = document.getElementById('label-field1-cardio');
+        if (cardioLabel1) cardioLabel1.innerText = label1;
+
+        document.getElementById('label-field2-title').innerText = isCardio ? '休息時間' : '次數';
+        document.getElementById('unit-field2').innerText = isCardio ? this.state.restUnit : '下';
+
+        // Toggle visibility
+        document.getElementById('input-kg-container').style.display = isCardio ? 'none' : 'block';
+        document.getElementById('train-wheel-container').style.display = isCardio ? 'block' : 'none';
+        document.getElementById('unit-selector-2').style.display = isCardio ? 'flex' : 'none';
+        
+        // Update units UI
+        this.setUnit(1, this.state.trainUnit);
+        this.setUnit(2, isCardio ? this.state.restUnit : '下');
 
         // Reset inputs
         document.getElementById('input-kg').value = '';
@@ -267,9 +314,10 @@ const app = {
         // Open sub-view
         document.getElementById('view-workout').classList.add('active');
 
-        // Sync reps wheel to last used value
+        // Sync wheels
         setTimeout(() => {
             this.syncRepsWheel(this.state.repsValue);
+            if (isCardio) this.syncTrainWheel(this.state.trainValue);
         }, 80);
     },
 
@@ -287,11 +335,15 @@ const app = {
             if (!groups[s.kg]) groups[s.kg] = [];
             groups[s.kg].push(s);
         });
+        const isCardio = act.catName === '有氧';
         const sortedKgs = Object.keys(groups).map(Number).sort((a, b) => b - a);
         el.innerHTML = sortedKgs.map(kg => {
-            const repsStr = groups[kg].map(s => `${s.reps}下`).join(' · ');
+            const firstSet = groups[kg][0];
+            const u1 = firstSet.u1 || (isCardio ? '秒' : 'kg');
+            const u2 = firstSet.u2 || (isCardio ? '秒' : '下');
+            const repsStr = groups[kg].map(s => `${s.reps}${u2}`).join(' · ');
             return `<div style="display:flex; gap:10px; font-size:13px; margin-bottom:4px;">
-                <span style="color:var(--primary); font-weight:800; min-width:50px;">${kg}kg</span>
+                <span style="color:var(--primary); font-weight:800; min-width:60px;">${kg}${u1}</span>
                 <span style="color:var(--text-sub);">${repsStr}</span>
             </div>`;
         }).join('');
@@ -299,16 +351,29 @@ const app = {
 
     // ─── COMMIT SET ──────────────────────────────────────────
     commitSet(isFinished) {
-        const kgRaw = document.getElementById('input-kg').value;
-        const kg = parseFloat(kgRaw);
-        if (kgRaw === '' || isNaN(kg) || kg < 0) {
-            const input = document.getElementById('input-kg');
-            input.style.color = '#ef4444';
-            input.focus();
-            setTimeout(() => input.style.color = '', 600);
-            return;
+        const isCardio = this.state.currentCat && this.state.currentCat.name === '有氧';
+        let kg, reps;
+        let u1, u2;
+
+        if (isCardio) {
+            kg = this.state.trainValue;
+            reps = this.state.repsValue;
+            u1 = this.state.trainUnit;
+            u2 = this.state.restUnit;
+        } else {
+            const kgRaw = document.getElementById('input-kg').value;
+            kg = parseFloat(kgRaw);
+            if (kgRaw === '' || isNaN(kg) || kg < 0) {
+                const input = document.getElementById('input-kg');
+                input.style.color = '#ef4444';
+                input.focus();
+                setTimeout(() => input.style.color = '', 600);
+                return;
+            }
+            reps = this.state.repsValue;
+            u1 = 'kg';
+            u2 = '下';
         }
-        const reps = this.state.repsValue;
         const note = document.getElementById('workout-notes').value.trim();
 
         let record = store.getDayRecord(this.state.viewDate);
@@ -323,7 +388,7 @@ const app = {
             };
             record.activities.push(act);
         }
-        act.sets.push({ id: Date.now().toString(), kg, reps, note });
+        act.sets.push({ id: Date.now().toString(), kg, reps, u1, u2, note });
         store.saveDayRecord(this.state.viewDate, record);
 
         if (isFinished) {
@@ -367,9 +432,12 @@ const app = {
     // ─── REPS WHEEL (index-based, no offsetTop bug) ──────────
     initRepsWheel() {
         const inner = document.getElementById('reps-wheel-inner');
-        for (let i = 1; i <= 100; i++) {
-            inner.innerHTML += `<div class="inline-wheel-item" data-val="${i}">${i}</div>`;
+        if (!inner) return;
+        let html = '';
+        for (let i = 0; i <= 100; i++) {
+            html += `<div class="inline-wheel-item reps-wheel-item" data-val="${i}">${i}</div>`;
         }
+        inner.innerHTML = html;
         const scroller = document.getElementById('reps-wheel-scroller');
         scroller.addEventListener('scroll', () => {
             clearTimeout(this.state.repsScrollTimeout);
@@ -379,9 +447,8 @@ const app = {
 
     syncRepsWheel(val) {
         const scroller = document.getElementById('reps-wheel-scroller');
-        // Item at index i (0-based): top = 60 + i*40
-        // To center: scrollTop = 60 + i*40 + 20 - 75 = i*40 + 5
-        const i = Math.max(0, val - 1);
+        if (!scroller) return;
+        const i = Math.max(0, val);
         scroller.scrollTop = i * 40 + 5;
         this.state.repsValue = val;
         this.updateRepsDisplay(val);
@@ -390,21 +457,18 @@ const app = {
 
     updateRepsSelection() {
         const scroller = document.getElementById('reps-wheel-scroller');
-        // center of visible area in scroll coords
-        const center = scroller.scrollTop + 75; // 150/2
-        // Each item is 40px, starting at scrollOffset 60
-        // Item i center = 60 + i*40 + 20 = 80 + i*40
-        // Closest index: i = round((center - 80) / 40)
+        if (!scroller) return;
+        const center = scroller.scrollTop + 75;
         const i = Math.round((center - 80) / 40);
-        const clamped = Math.max(0, Math.min(99, i));
-        const val = clamped + 1;
+        const clamped = Math.max(0, Math.min(100, i));
+        const val = clamped;
         this.state.repsValue = val;
         this.updateRepsDisplay(val);
         this.markSelectedRepsItem(clamped);
     },
 
     markSelectedRepsItem(selectedIndex) {
-        const items = document.querySelectorAll('.inline-wheel-item');
+        const items = document.querySelectorAll('.reps-wheel-item');
         items.forEach((item, i) => {
             item.classList.toggle('selected', i === selectedIndex);
         });
@@ -412,6 +476,55 @@ const app = {
 
     updateRepsDisplay(val) {
         const el = document.getElementById('reps-display');
+        if (el) el.innerText = val;
+    },
+
+    initTrainWheel() {
+        const inner = document.getElementById('train-wheel-inner');
+        if (!inner) return;
+        let html = '';
+        for (let i = 0; i <= 300; i++) {
+            html += `<div class="inline-wheel-item train-wheel-item" data-val="${i}">${i}</div>`;
+        }
+        inner.innerHTML = html;
+        const scroller = document.getElementById('train-wheel-scroller');
+        scroller.addEventListener('scroll', () => {
+            clearTimeout(this.state.trainScrollTimeout);
+            this.state.trainScrollTimeout = setTimeout(() => this.updateTrainSelection(), 80);
+        });
+    },
+
+    syncTrainWheel(val) {
+        const scroller = document.getElementById('train-wheel-scroller');
+        if (!scroller) return;
+        const i = Math.max(0, val);
+        scroller.scrollTop = i * 40 + 5;
+        this.state.trainValue = val;
+        this.updateTrainDisplay(val);
+        this.markSelectedTrainItem(i);
+    },
+
+    updateTrainSelection() {
+        const scroller = document.getElementById('train-wheel-scroller');
+        if (!scroller) return;
+        const center = scroller.scrollTop + 75;
+        const i = Math.round((center - 80) / 40);
+        const clamped = Math.max(0, Math.min(300, i));
+        const val = clamped;
+        this.state.trainValue = val;
+        this.updateTrainDisplay(val);
+        this.markSelectedTrainItem(clamped);
+    },
+
+    markSelectedTrainItem(selectedIndex) {
+        const items = document.querySelectorAll('.train-wheel-item');
+        items.forEach((item, i) => {
+            item.classList.toggle('selected', i === selectedIndex);
+        });
+    },
+
+    updateTrainDisplay(val) {
+        const el = document.getElementById('train-display');
         if (el) el.innerText = val;
     },
 
@@ -580,11 +693,14 @@ const app = {
                 if (!groups[s.kg]) groups[s.kg] = [];
                 groups[s.kg].push(s);
             });
+            const isCardio = act.catName === '有氧';
             const sortedKgs = Object.keys(groups).map(Number).sort((a, b) => b - a);
             const rowsHtml = sortedKgs.map(kg => {
-                const pills = groups[kg].map(s => `<span class="detail-rep-pill">${s.reps}下</span>`).join('');
+                const unit1 = isCardio ? '秒' : 'kg';
+                const unit2 = isCardio ? '秒' : '下';
+                const pills = groups[kg].map(s => `<span class="detail-rep-pill">${s.reps}${unit2}</span>`).join('');
                 return `<div class="detail-weight-row">
-                    <span class="detail-weight-label">${kg}kg</span>
+                    <span class="detail-weight-label">${kg}${unit1}</span>
                     <div style="display:flex; flex-wrap:wrap; gap:4px;">${pills}</div>
                 </div>`;
             }).join('');
@@ -681,11 +797,14 @@ const app = {
                 text += `\n📅 ${d.getMonth() + 1}/${d.getDate()} (${r.feeling}) ${r.duration}分\n`;
                 text += `類型: ${(r.types || []).join(', ') || '未設定'}\n`;
                 r.activities.forEach(a => {
-                    const vol = a.sets.reduce((s, x) => s + x.kg * x.reps, 0);
+                    const isCardio = a.catName === '有氧';
+                    const vol = isCardio ? 0 : a.sets.reduce((s, x) => s + x.kg * x.reps, 0);
                     totalVol += vol;
-                    text += `• ${a.exName}: ${a.sets.length}組 / 容量${vol}kg\n`;
+                    const summaryLine = isCardio ? `• ${a.exName}: ${a.sets.length}組\n` : `• ${a.exName}: ${a.sets.length}組 / 容量${vol}kg\n`;
+                    text += summaryLine;
                     a.sets.forEach((s, i) => {
-                        text += `   ${i + 1}. ${s.kg}kg × ${s.reps}下${s.note ? ` (${s.note})` : ''}\n`;
+                        const setDetail = isCardio ? `${s.kg}秒訓練 / ${s.reps}秒休息` : `${s.kg}kg × ${s.reps}下`;
+                        text += `   ${i + 1}. ${setDetail}${s.note ? ` (${s.note})` : ''}\n`;
                     });
                 });
             }

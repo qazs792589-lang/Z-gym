@@ -4,7 +4,8 @@ const DEFAULT_CATS = [
     { id: 'c3', name: '腿部' },
     { id: 'c4', name: '肩部' },
     { id: 'c5', name: '手部' },
-    { id: 'c6', name: '核心' }
+    { id: 'c6', name: '核心' },
+    { id: 'c7', name: '有氧' }
 ];
 
 const DEFAULT_EXS = {
@@ -13,7 +14,8 @@ const DEFAULT_EXS = {
     'c3': [{id:'e7', name:'槓鈴深蹲'}, {id:'e8', name:'腿推機'}, {id:'e9', name:'羅馬尼亞硬舉'}],
     'c4': [{id:'e10', name:'啞鈴肩推'}, {id:'e11', name:'側平舉'}, {id:'e12', name:'滑輪面拉'}],
     'c5': [{id:'e13', name:'二頭彎舉'}, {id:'e14', name:'三頭下壓'}],
-    'c6': [{id:'e15', name:'捲腹'}, {id:'e16', name:'棒式'}]
+    'c6': [{id:'e15', name:'捲腹'}, {id:'e16', name:'棒式'}],
+    'c7': [{id:'e17', name:'跑步機'}, {id:'e18', name:'飛輪'}, {id:'e19', name:'橢圓機'}, {id:'e20', name:'划船機'}]
 };
 
 const store = {
