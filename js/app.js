@@ -711,26 +711,53 @@ const app = {
 
         const metaParts = [];
         if (record.feeling) metaParts.push(record.feeling);
-        if (record.duration) metaParts.push(`${record.duration}分`);
+        
+        // Calculate dynamic duration
+        let manual = record.duration || 0;
+        let cardioMins = 0;
+        record.activities.forEach(act => {
+            if (act.catName === '有氧') {
+                act.sets.forEach(s => {
+                    if (s.u1 === '分') cardioMins += (parseFloat(s.kg) || 0);
+                });
+            }
+        });
+        const displayDuration = Math.max(manual, cardioMins);
+        if (displayDuration > 0) metaParts.push(`${displayDuration}分`);
+        
         if (record.types && record.types.length) metaParts.push(record.types.join('、'));
 
         const exDetailsHtml = record.activities.map(act => {
+            const isCardio = act.catName === '有氧';
             const groups = {};
             act.sets.forEach(s => {
-                if (!groups[s.kg]) groups[s.kg] = [];
-                groups[s.kg].push(s);
+                const gKey = isCardio ? `${s.kg}_${s.u1 || '秒'}` : `${s.kg}`;
+                if (!groups[gKey]) groups[gKey] = [];
+                groups[gKey].push(s);
             });
-            const isCardio = act.catName === '有氧';
-            const sortedKgs = Object.keys(groups).map(Number).sort((a, b) => b - a);
-            const rowsHtml = sortedKgs.map(kg => {
-                const unit1 = isCardio ? '秒' : 'kg';
-                const unit2 = isCardio ? '秒' : '下';
-                const pills = groups[kg].map(s => `<span class="detail-rep-pill">${s.reps}${unit2}</span>`).join('');
+            
+            const sortedKeys = Object.keys(groups).sort((a, b) => {
+                if (isCardio) {
+                    const [vA, uA] = a.split('_');
+                    const [vB, uB] = b.split('_');
+                    if (uA !== uB) return uA === '分' ? -1 : 1;
+                    return Number(vB) - Number(vA);
+                }
+                return Number(b) - Number(a);
+            });
+
+            const rowsHtml = sortedKeys.map(key => {
+                const groupSets = groups[key];
+                const first = groupSets[0];
+                const u1 = first.u1 || (isCardio ? '秒' : 'kg');
+                const u2 = first.u2 || (isCardio ? '秒' : '下');
+                const pills = groupSets.map(s => `<span class="detail-rep-pill">${s.reps}${s.u2 || u2}</span>`).join('');
                 return `<div class="detail-weight-row">
-                    <span class="detail-weight-label">${kg}${unit1}</span>
+                    <span class="detail-weight-label">${first.kg}${u1}</span>
                     <div style="display:flex; flex-wrap:wrap; gap:4px;">${pills}</div>
                 </div>`;
             }).join('');
+            
             return `<div class="detail-ex-row">
                 <div class="detail-ex-name">${act.exName}</div>
                 ${rowsHtml}
