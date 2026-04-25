@@ -177,22 +177,37 @@ const app = {
         list.classList.remove('empty');
 
         list.innerHTML = activities.map(act => {
-            // Group sets by kg
+            const isCardio = act.catName === '有氧';
+            // Group sets by value and unit
             const groups = {};
             act.sets.forEach(s => {
-                if (!groups[s.kg]) groups[s.kg] = [];
-                groups[s.kg].push(s);
+                const gKey = isCardio ? `${s.kg}_${s.u1 || '秒'}` : `${s.kg}`;
+                if (!groups[gKey]) groups[gKey] = [];
+                groups[gKey].push(s);
             });
 
-            const isCardio = act.catName === '有氧';
-            const sortedKgs = Object.keys(groups).map(Number).sort((a, b) => b - a);
+            const sortedKeys = Object.keys(groups).sort((a, b) => {
+                if (isCardio) {
+                    // Sort by unit (分 > 秒) then by value
+                    const [vA, uA] = a.split('_');
+                    const [vB, uB] = b.split('_');
+                    if (uA !== uB) return uA === '分' ? -1 : 1;
+                    return Number(vB) - Number(vA);
+                }
+                return Number(b) - Number(a);
+            });
 
-            const groupsHtml = sortedKgs.map(kg => {
-                const repsBadges = groups[kg].map(s => {
-                    const label = isCardio ? `${s.reps}秒${s.note ? ' 📝' : ''}` : `${s.reps}下${s.note ? ' 📝' : ''}`;
+            const groupsHtml = sortedKeys.map(key => {
+                const groupSets = groups[key];
+                const first = groupSets[0];
+                const repsBadges = groupSets.map(s => {
+                    const u2 = s.u2 || (isCardio ? '秒' : '下');
+                    const label = isCardio ? `${s.reps}${u2}${s.note ? ' 📝' : ''}` : `${s.reps}${u2}${s.note ? ' 📝' : ''}`;
                     return `<div class="rep-badge" title="${s.note || ''}" onclick="app.deleteSet('${act.exId}', '${s.id}')">${label}</div>`;
                 }).join('');
-                const weightLabel = isCardio ? `${kg}秒` : `${kg}kg`;
+                
+                const u1 = first.u1 || (isCardio ? '秒' : 'kg');
+                const weightLabel = isCardio ? `${first.kg}${u1}` : `${first.kg}kg`;
                 return `
                 <div class="weight-group-row">
                     <div class="weight-group-label">${weightLabel}</div>
@@ -329,21 +344,35 @@ const app = {
             return;
         }
         el.className = '';
-        // Group by weight descending for display in log too
+        // Group by value and unit
         const groups = {};
-        act.sets.forEach(s => {
-            if (!groups[s.kg]) groups[s.kg] = [];
-            groups[s.kg].push(s);
-        });
         const isCardio = act.catName === '有氧';
-        const sortedKgs = Object.keys(groups).map(Number).sort((a, b) => b - a);
-        el.innerHTML = sortedKgs.map(kg => {
-            const firstSet = groups[kg][0];
+        act.sets.forEach(s => {
+            const gKey = isCardio ? `${s.kg}_${s.u1 || '秒'}` : `${s.kg}`;
+            if (!groups[gKey]) groups[gKey] = [];
+            groups[gKey].push(s);
+        });
+
+        const sortedKeys = Object.keys(groups).sort((a, b) => {
+            if (isCardio) {
+                const [vA, uA] = a.split('_');
+                const [vB, uB] = b.split('_');
+                if (uA !== uB) return uA === '分' ? -1 : 1;
+                return Number(vB) - Number(vA);
+            }
+            return Number(b) - Number(a);
+        });
+
+        el.innerHTML = sortedKeys.map(key => {
+            const groupSets = groups[key];
+            const firstSet = groupSets[0];
             const u1 = firstSet.u1 || (isCardio ? '秒' : 'kg');
-            const u2 = firstSet.u2 || (isCardio ? '秒' : '下');
-            const repsStr = groups[kg].map(s => `${s.reps}${u2}`).join(' · ');
+            const repsStr = groupSets.map(s => {
+                const u2 = s.u2 || (isCardio ? '秒' : '下');
+                return `${s.reps}${u2}`;
+            }).join(' · ');
             return `<div style="display:flex; gap:10px; font-size:13px; margin-bottom:4px;">
-                <span style="color:var(--primary); font-weight:800; min-width:60px;">${kg}${u1}</span>
+                <span style="color:var(--primary); font-weight:800; min-width:60px;">${firstSet.kg}${u1}</span>
                 <span style="color:var(--text-sub);">${repsStr}</span>
             </div>`;
         }).join('');
