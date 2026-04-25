@@ -772,31 +772,49 @@ const app = {
 
     updateHistoryStats() {
         const today = new Date();
+        const mainYear = today.getFullYear();
+        const mainMonth = today.getMonth();
 
-        // 本週：本週一到今天（週日視為上週末，週一為本週起點）
+        // 本週：本週一到週日
         const dow = today.getDay(); // 0=Sun
         const mondayOffset = dow === 0 ? -6 : 1 - dow;
-        const monday = new Date(today.getFullYear(), today.getMonth(), today.getDate() + mondayOffset);
-
-        // 本月：本月1號到今天
-        const firstOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+        const monday = new Date(mainYear, mainMonth, today.getDate() + mondayOffset);
 
         let wd = 0, wt = 0, md = 0, mt = 0;
 
-        // 週統計（Mon → today，最多7天）
+        // Helper to get total duration for a day (manual duration or sum of cardio minutes)
+        const getDayDuration = (record) => {
+            let manual = record.duration || 0;
+            let cardioMins = 0;
+            record.activities.forEach(act => {
+                if (act.catName === '有氧') {
+                    act.sets.forEach(s => {
+                        if (s.u1 === '分') cardioMins += (parseFloat(s.kg) || 0);
+                    });
+                }
+            });
+            return Math.max(manual, cardioMins);
+        };
+
+        // 週統計 (Mon → Sun, 7 days)
         for (let i = 0; i < 7; i++) {
             const d = new Date(monday.getFullYear(), monday.getMonth(), monday.getDate() + i);
-            if (d > today) break;
             const r = store.getDayRecord(d);
-            if (r.activities.length > 0) { wd++; wt += r.duration || 0; }
+            if (r.activities.length > 0) {
+                wd++;
+                wt += getDayDuration(r);
+            }
         }
 
-        // 月統計（1日 → today）
-        const daysThisMonth = today.getDate();
-        for (let i = 1; i <= daysThisMonth; i++) {
-            const d = new Date(today.getFullYear(), today.getMonth(), i);
+        // 月統計 (1st → End of Month)
+        const lastDay = new Date(mainYear, mainMonth + 1, 0).getDate();
+        for (let i = 1; i <= lastDay; i++) {
+            const d = new Date(mainYear, mainMonth, i);
             const r = store.getDayRecord(d);
-            if (r.activities.length > 0) { md++; mt += r.duration || 0; }
+            if (r.activities.length > 0) {
+                md++;
+                mt += getDayDuration(r);
+            }
         }
 
         document.getElementById('hist-week-days').innerText = wd;
