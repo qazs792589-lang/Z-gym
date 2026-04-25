@@ -207,6 +207,17 @@
                 </div>
                 <hr class="divider">
                 <div class="form-group">
+                    <label style="color:#888;">資料備份與傳輸</label>
+                    <div style="display:flex; gap:10px; margin-top:10px;">
+                        <button class="btn-outline-green flex-1" style="padding:12px; font-size:14px;"
+                            onclick="app.exportCSV()">匯出 CSV</button>
+                        <button class="btn-outline-green flex-1" style="padding:12px; font-size:14px;"
+                            onclick="document.getElementById('csv-upload').click()">匯入 CSV</button>
+                    </div>
+                    <input type="file" id="csv-upload" style="display:none;" accept=".csv" onchange="app.importCSV(event)">
+                </div>
+                <hr class="divider">
+                <div class="form-group">
                     <label style="color:#888;">個人資料</label>
                     <div style="display:flex;gap:16px;margin-top:10px">
                         <div class="flex-1">

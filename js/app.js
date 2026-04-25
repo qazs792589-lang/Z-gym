@@ -1015,6 +1015,117 @@ const app = {
         if (isDefault) { store.hideDefaultEx(exId); }
         else { store.deleteCustomExercise(catId, exId); }
         this.renderManageDB();
+    },
+
+    // ─── CSV IMPORT/EXPORT ──────────────────────────────────
+    exportCSV() {
+        const keys = store.getAllDayKeys().sort();
+        if (keys.length === 0) { alert('尚無資料可匯出'); return; }
+
+        let csv = '\uFEFF'; // BOM for Excel UTF-8
+        csv += '日期,心情,時長(分),當日備註,訓練類型,部位,動作,重量/訓練時間,重量單位,次數/休息時間,次數單位,組備註\n';
+
+        keys.forEach(k => {
+            const dateStr = k.replace('fitlog_v2_day_', '');
+            const record = JSON.parse(localStorage.getItem(k));
+            if (!record) return;
+
+            const baseInfo = [
+                dateStr,
+                record.feeling || '',
+                record.duration || '',
+                (record.notes || '').replace(/,/g, '，')
+            ];
+
+            const typeStr = (record.types || []).join('、');
+
+            record.activities.forEach(act => {
+                act.sets.forEach(s => {
+                    const row = [
+                        ...baseInfo,
+                        typeStr,
+                        act.catName,
+                        act.exName,
+                        s.kg,
+                        s.u1 || (act.catName === '有氧' ? '秒' : 'kg'),
+                        s.reps,
+                        s.u2 || (act.catName === '有氧' ? '秒' : '下'),
+                        (s.note || '').replace(/,/g, '，')
+                    ];
+                    csv += row.join(',') + '\n';
+                });
+            });
+        });
+
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.setAttribute('download', `FitLog_Export_${new Date().toISOString().split('T')[0]}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    },
+
+    importCSV(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const content = e.target.result;
+            const lines = content.split(/\r?\n/).filter(l => l.trim() !== '');
+            if (lines.length <= 1) { alert('CSV 檔案無效或無資料'); return; }
+
+            if (!confirm('匯入將會合併現有資料（若日期重複將會新增組數），確定嗎？')) return;
+
+            const dayMap = {};
+
+            for (let i = 1; i < lines.length; i++) {
+                const cols = lines[i].split(',');
+                if (cols.length < 7) continue;
+
+                const date = cols[0];
+                if (!dayMap[date]) {
+                    const existing = store.getDayRecord(new Date(date));
+                    dayMap[date] = existing.activities.length > 0 ? existing : store.emptyRecord();
+                    dayMap[date].feeling = cols[1] || dayMap[date].feeling;
+                    dayMap[date].duration = parseInt(cols[2]) || dayMap[date].duration;
+                    dayMap[date].notes = cols[3] || dayMap[date].notes;
+                    dayMap[date].types = cols[4] ? cols[4].split('、') : dayMap[date].types;
+                }
+
+                const catName = cols[5];
+                const exName = cols[6];
+                const kg = cols[7];
+                const u1 = cols[8];
+                const reps = cols[9];
+                const u2 = cols[10];
+                const sNote = cols[11];
+
+                let act = dayMap[date].activities.find(a => a.catName === catName && a.exName === exName);
+                if (!act) {
+                    act = { exId: 'e' + Date.now() + Math.random(), exName, catName, sets: [] };
+                    dayMap[date].activities.push(act);
+                }
+
+                act.sets.push({
+                    id: 's' + Date.now() + Math.random(),
+                    kg: parseFloat(kg) || 0,
+                    reps: parseFloat(reps) || 0,
+                    u1: u1,
+                    u2: u2,
+                    note: sNote || ''
+                });
+            }
+
+            for (const date in dayMap) {
+                store.saveDayRecord(new Date(date), dayMap[date]);
+            }
+
+            alert('匯入完成！');
+            location.reload();
+        };
+        reader.readAsText(file);
     }
 };
 
