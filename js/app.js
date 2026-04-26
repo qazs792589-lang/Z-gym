@@ -941,19 +941,33 @@ const app = {
         const fEl = document.getElementById('setting-fat');
         const mEl = document.getElementById('setting-muscle');
         const uEl = document.getElementById('setting-muscle-unit');
+        const dEl = document.getElementById('setting-date');
+        
         if (wEl) wEl.value = s.weight;
         if (hEl) hEl.value = s.height;
         if (fEl) fEl.value = s.fat || '';
         if (mEl) mEl.value = s.muscle || '';
         if (uEl) uEl.innerText = s.muscleUnit || 'kg';
+        if (dEl && !dEl.value) dEl.value = new Date().toISOString().split('T')[0];
 
         this.renderBodyHistory();
     },
 
     toggleSettingMuscleUnit() {
         const lbl = document.getElementById('setting-muscle-unit');
-        const next = lbl.innerText === 'kg' ? '%' : 'kg';
-        lbl.innerText = next;
+        const input = document.getElementById('setting-muscle');
+        const weightInput = document.getElementById('setting-weight');
+        const weight = parseFloat(weightInput.value) || 0;
+        const val = parseFloat(input.value) || 0;
+
+        if (lbl.innerText === 'kg') {
+            lbl.innerText = '%';
+            if (weight > 0) input.value = ((val / weight) * 100).toFixed(1);
+        } else {
+            lbl.innerText = 'kg';
+            if (weight > 0) input.value = (weight * (val / 100)).toFixed(1);
+        }
+        this.renderBodyHistory();
     },
 
     renderBodyHistory() {
@@ -963,30 +977,141 @@ const app = {
 
         if (history.length === 0) {
             list.innerHTML = '<div style="color:#444; font-size:13px; text-align:center; padding:20px;">尚無記錄</div>';
+            this.renderBodyChart();
             return;
         }
 
+        const currentUnit = document.getElementById('setting-muscle-unit').innerText;
         const sorted = [...history].sort((a, b) => new Date(b.date) - new Date(a.date));
-        list.innerHTML = sorted.map((h, idx) => `
-            <div class="glass-card" style="padding:12px; display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-                <div>
-                    <div style="font-size:12px; color:var(--primary); font-weight:bold; margin-bottom:4px;">${h.date}</div>
-                    <div style="font-size:14px; font-weight:800; color:#fff;">
-                        ${h.weight}kg / ${h.fat}% / ${h.muscle}${h.muscleUnit || 'kg'}
+        list.innerHTML = sorted.map((h, idx) => {
+            let displayMuscle = h.muscle;
+            if (h.muscleUnit && h.muscleUnit !== currentUnit) {
+                if (currentUnit === '%') {
+                    displayMuscle = ((h.muscle / h.weight) * 100).toFixed(1);
+                } else {
+                    displayMuscle = (h.weight * (h.muscle / 100)).toFixed(1);
+                }
+            } else if (!h.muscleUnit && currentUnit === '%') {
+                displayMuscle = ((h.muscle / h.weight) * 100).toFixed(1);
+            }
+            return `
+                <div class="glass-card" style="padding:12px; display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                    <div>
+                        <div style="font-size:12px; color:var(--primary); font-weight:bold; margin-bottom:4px;">${h.date}</div>
+                        <div style="font-size:14px; font-weight:800; color:#fff;">
+                            ${h.weight}kg / ${h.fat}% / ${displayMuscle}${currentUnit}
+                        </div>
                     </div>
+                    <span style="color:var(--danger); font-size:12px; cursor:pointer;" onclick="app.deleteBodyRecord(${idx})">刪除</span>
                 </div>
-                <span style="color:var(--danger); font-size:12px; cursor:pointer;" onclick="app.deleteBodyRecord(${idx})">刪除</span>
-            </div>
-        `).join('');
+            `;
+        }).join('');
+
+        this.renderBodyChart();
+    },
+
+    renderBodyChart() {
+        const history = store.getBodyHistory();
+        const container = document.getElementById('body-chart-svg');
+        if (!container) return;
+
+        if (history.length === 0) {
+            container.innerHTML = '<div style="height:100%; display:flex; align-items:center; justify-content:center; font-size:12px; color:#444;">尚無數據</div>';
+            return;
+        }
+
+        const sorted = [...history].sort((a, b) => new Date(a.date) - new Date(b.date)).slice(-10);
+        const w = container.clientWidth || 200;
+        const h = container.clientHeight || 150;
+        const padT = 25; 
+        const padB = 35; 
+        const padL = 35; 
+        const padR = 35; 
+
+        const currentUnit = document.getElementById('setting-muscle-unit').innerText;
+
+        const weights = sorted.map(d => d.weight);
+        const fats = sorted.map(d => d.fat || 0);
+        const muscles = sorted.map(d => {
+            let val = d.muscle || 0;
+            if (d.muscleUnit && d.muscleUnit !== currentUnit) {
+                if (currentUnit === '%') val = (val / d.weight) * 100;
+                else val = d.weight * (val / 100);
+            } else if (!d.muscleUnit && currentUnit === '%') {
+                val = (val / d.weight) * 100;
+            }
+            return val;
+        });
+
+        const getRange = (arr, buffer = 2) => {
+            const min = Math.min(...arr);
+            const max = Math.max(...arr);
+            const range = max - min;
+            return { min: Math.max(0, min - (range * 0.1 || buffer)), max: max + (range * 0.1 || buffer) };
+        };
+
+        const rangeL = getRange(weights, 2);
+        const rangeR = getRange([...fats, ...muscles], 5);
+
+        const getY = (val, range) => h - padB - ((val - range.min) / (range.max - range.min || 1)) * (h - padT - padB);
+        const getX = (i) => padL + (i / (sorted.length - 1 || 1)) * (w - padL - padR);
+
+        let weightPath = '', fatPath = '', musclePath = '';
+        sorted.forEach((d, i) => {
+            const x = getX(i);
+            weightPath += (i === 0 ? 'M' : 'L') + x + ',' + getY(weights[i], rangeL);
+            fatPath += (i === 0 ? 'M' : 'L') + x + ',' + getY(fats[i], rangeR);
+            musclePath += (i === 0 ? 'M' : 'L') + x + ',' + getY(muscles[i], rangeR);
+        });
+
+        const ticksL = [rangeL.min, (rangeL.min + rangeL.max) / 2, rangeL.max];
+        const ticksR = [rangeR.min, (rangeR.min + rangeR.max) / 2, rangeR.max];
+
+        container.innerHTML = `
+            <svg width="100%" height="100%" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" style="overflow:visible">
+                <!-- 座標軸線 -->
+                <line x1="${padL}" y1="${h - padB}" x2="${w - padR}" y2="${h - padB}" stroke="#333" stroke-width="1" />
+                <line x1="${padL}" y1="${padT}" x2="${padL}" y2="${h - padB}" stroke="#333" stroke-width="1" />
+                
+                <!-- Y 軸標籤 (左: 體重) -->
+                ${ticksL.map(v => `<text x="${padL - 5}" y="${getY(v, rangeL)}" fill="#888" font-size="8" text-anchor="end" alignment-baseline="middle">${v.toFixed(1)}</text>`).join('')}
+                
+                <!-- Y 軸標籤 (右: 體脂/肌肉) -->
+                ${ticksR.map(v => `<text x="${w - padR + 5}" y="${getY(v, rangeR)}" fill="#888" font-size="8" text-anchor="start" alignment-baseline="middle">${v.toFixed(1)}</text>`).join('')}
+
+                <!-- X 軸日期 -->
+                ${sorted.map((d, i) => {
+                    if (i === 0 || i === sorted.length - 1 || i === Math.floor(sorted.length / 2)) {
+                        const dateObj = new Date(d.date);
+                        return `<text x="${getX(i)}" y="${h - padB + 15}" fill="#888" font-size="8" text-anchor="middle">${dateObj.getMonth() + 1}/${dateObj.getDate()}</text>`;
+                    }
+                    return '';
+                }).join('')}
+
+                <!-- 數據線 -->
+                <path d="${weightPath}" fill="none" stroke="var(--primary)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />
+                <path d="${fatPath}" fill="none" stroke="#f59e0b" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="3,2" />
+                <path d="${musclePath}" fill="none" stroke="#8b5cf6" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+                
+                ${sorted.map((d, i) => `
+                    <circle cx="${getX(i)}" cy="${getY(weights[i], rangeL)}" r="2.5" fill="var(--primary)" />
+                    <circle cx="${getX(i)}" cy="${getY(fats[i], rangeR)}" r="1.5" fill="#f59e0b" />
+                    <circle cx="${getX(i)}" cy="${getY(muscles[i], rangeR)}" r="1.5" fill="#8b5cf6" />
+                `).join('')}
+
+                <text x="${padL}" y="${padT - 10}" fill="var(--primary)" font-size="9" font-weight="bold">kg</text>
+                <text x="${w - padR}" y="${padT - 10}" fill="#f59e0b" font-size="9" font-weight="bold" text-anchor="end">${currentUnit === '%' ? '%' : 'kg'}</text>
+            </svg>
+        `;
     },
 
     deleteBodyRecord(index) {
-        if (!confirm('確定刪除此筆記錄？')) return;
-        let history = store.getBodyHistory();
+        if (!confirm('確定刪除此紀錄？')) return;
+        const history = store.getBodyHistory();
         const sorted = [...history].sort((a, b) => new Date(b.date) - new Date(a.date));
         const itemToDelete = sorted[index];
-        history = history.filter(h => h !== itemToDelete);
-        store.saveBodyHistory(history);
+        const newHistory = history.filter(h => h !== itemToDelete);
+        store.saveBodyHistory(newHistory);
         this.renderBodyHistory();
     },
 
@@ -1027,21 +1152,34 @@ const app = {
         const newSettings = { weight, height, fat, muscle, muscleUnit };
         store.saveSettings(newSettings);
 
+        const dateStr = document.getElementById('setting-date').value || new Date().toISOString().split('T')[0];
+
         if (weight > 0 || fat > 0 || muscle > 0) {
             const history = store.getBodyHistory();
-            const todayStr = new Date().toISOString().split('T')[0];
-            history.push({ date: todayStr, weight, fat, muscle, muscleUnit });
+            // 檢查該日期是否已有紀錄，有的話更新，沒有的話新增
+            const existingIdx = history.findIndex(h => h.date === dateStr);
+            if (existingIdx !== -1) {
+                history[existingIdx] = { date: dateStr, weight, fat, muscle, muscleUnit };
+            } else {
+                history.push({ date: dateStr, weight, fat, muscle, muscleUnit });
+            }
             store.saveBodyHistory(history);
         }
 
         // Visual feedback
-        const btn = (event && event.currentTarget) ? event.currentTarget : null;
+        const btn = (event && event.currentTarget && event.currentTarget.tagName === 'BUTTON') ? event.currentTarget : null;
         if (btn) {
             const orig = btn.innerHTML;
             btn.innerHTML = '✅ 已儲存！';
             setTimeout(() => btn.innerHTML = orig, 1200);
         } else {
-            alert('已儲存！');
+            // If called manually without event
+            const saveBtn = document.querySelector('#view-settings .btn-full-green');
+            if (saveBtn) {
+                const orig = saveBtn.innerHTML;
+                saveBtn.innerHTML = '✅ 已儲存！';
+                setTimeout(() => saveBtn.innerHTML = orig, 1200);
+            }
         }
 
         this.renderSettingsView();
@@ -1256,12 +1394,6 @@ const app = {
             location.reload();
         };
         reader.readAsText(file);
-    }
-};
-
-document.addEventListener('DOMContentLoaded', () => app.init());
-        };
-reader.readAsText(file);
     }
 };
 

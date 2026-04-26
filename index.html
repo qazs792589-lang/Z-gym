@@ -244,16 +244,19 @@
                         onchange="app.importCSV(event)">
                 </div>
                 <hr class="divider">
-                <div class="form-group">
-                    <label style="color:#888;">個人資料</label>
-                    <div style="display:flex;gap:16px;margin-top:10px">
-                        <div class="flex-1">
-                            <span style="font-size:12px;color:#888;">體重 (kg)</span>
-                            <input type="number" id="setting-weight" class="custom-input">
-                        </div>
+                <div class="glass-card" style="padding:15px; margin-top:10px;">
+                    <div style="margin-bottom:12px;">
+                        <span style="font-size:12px;color:#888;">紀錄日期</span>
+                        <input type="date" id="setting-date" class="custom-input" style="width:100%; margin-top:4px;">
+                    </div>
+                    <div style="display:flex; gap:12px; margin-bottom:12px;">
                         <div class="flex-1">
                             <span style="font-size:12px;color:#888;">身高 (cm)</span>
-                            <input type="number" id="setting-height" class="custom-input">
+                            <input type="number" id="setting-height" class="custom-input" step="0.1">
+                        </div>
+                        <div class="flex-1">
+                            <span style="font-size:12px;color:#888;">體重 (kg)</span>
+                            <input type="number" id="setting-weight" class="custom-input" step="0.1">
                         </div>
                     </div>
                     <div style="display:flex;gap:16px;margin-top:16px">
@@ -276,9 +279,26 @@
 
                 <!-- Body History -->
                 <div class="form-group" style="margin-top:24px;">
-                    <label style="color:#888;">歷史記錄</label>
-                    <div id="body-history-list" style="margin-top:12px; display:flex; flex-direction:column; gap:10px;">
-                        <!-- Items by JS -->
+                    <label style="color:#888;">歷史紀錄與趨勢</label>
+                    <div style="display:flex; gap:16px; margin-top:12px; align-items: flex-start;">
+                        <div id="body-chart-container" style="flex: 1; background: rgba(255,255,255,0.03); border-radius: 12px; padding: 12px; min-height: 200px; display: flex; flex-direction: column;">
+                            <!-- Chart Legend -->
+                            <div style="display:flex; gap:10px; margin-bottom:10px; font-size:10px; color:#888;">
+                                <div style="display:flex; align-items:center; gap:4px;">
+                                    <div style="width:8px; height:8px; background:var(--primary); border-radius:2px;"></div>體重
+                                </div>
+                                <div style="display:flex; align-items:center; gap:4px;">
+                                    <div style="width:8px; height:8px; background:#f59e0b; border-radius:2px;"></div>體脂
+                                </div>
+                                <div style="display:flex; align-items:center; gap:4px;">
+                                    <div style="width:8px; height:8px; background:#8b5cf6; border-radius:2px;"></div>肌肉
+                                </div>
+                            </div>
+                            <div id="body-chart-svg" style="flex:1;"></div>
+                        </div>
+                        <div id="body-history-list" class="custom-scrollbar" style="flex: 1.2; display:flex; flex-direction:column; gap:8px; max-height: 250px; overflow-y: auto; padding-right: 4px;">
+                            <!-- Items by JS -->
+                        </div>
                     </div>
                 </div>
             </div>
@@ -519,6 +539,4 @@
     </script>
 </body>
 
-</html>
-
-</html>
+</html>
