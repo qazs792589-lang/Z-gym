@@ -205,8 +205,8 @@ const app = {
                 const first = groupSets[0];
                 const repsBadges = groupSets.map(s => {
                     const u2 = s.u2 || (isCardio ? '秒' : '下');
-                    const label = isCardio ? `${s.reps}${u2}${s.note ? ' 📝' : ''}` : `${s.reps}${u2}${s.note ? ' 📝' : ''}`;
-                    return `<div class="rep-badge" title="${s.note || ''}" onclick="app.deleteSet('${act.exId}', '${s.id}')">${label}</div>`;
+                    const label = `${s.reps}${u2}`;
+                    return `<div class="rep-badge" onclick="app.deleteSet('${act.exId}', '${s.id}')">${label}</div>`;
                 }).join('');
                 
                 const u1 = first.u1 || (isCardio ? '秒' : 'kg');
@@ -218,6 +218,11 @@ const app = {
                 </div>`;
             }).join('');
 
+            const notesHtml = (act.note && act.note.trim() !== '') ? 
+                `<div style="margin-top:10px; padding-top:8px; border-top:1px solid rgba(255,255,255,0.05); font-size:12px; color:var(--text-sub); display:flex; flex-direction:column; gap:4px;">
+                    <div>📝 ${act.note.trim()}</div>
+                </div>` : '';
+
             return `
             <div class="action-item">
                 <div class="action-item-header">
@@ -228,6 +233,7 @@ const app = {
                     </div>
                 </div>
                 ${groupsHtml}
+                ${notesHtml}
             </div>`;
         }).join('');
     },
@@ -366,7 +372,7 @@ const app = {
 
         // Reset inputs
         document.getElementById('input-kg').value = '';
-        document.getElementById('workout-notes').value = '';
+        document.getElementById('workout-notes').value = (act && act.note) ? act.note : '';
 
         // Render today's log
         this.renderWorkoutLog(act);
@@ -462,14 +468,14 @@ const app = {
             };
             record.activities.push(act);
         }
-        act.sets.push({ id: Date.now().toString(), kg, reps, u1, u2, note });
+        act.note = note;
+        act.sets.push({ id: Date.now().toString(), kg, reps, u1, u2 });
         store.saveDayRecord(this.state.viewDate, record);
 
         if (isFinished) {
             this.closeSubView();
         } else {
-            // Clear notes, flash the input border, update log
-            document.getElementById('workout-notes').value = '';
+            // Flash the input border, update log
             this.renderWorkoutLog(act);
             // Update quick kg buttons to include new kg if not already
             const usedKgs = [...new Set(act.sets.map(s => s.kg))].sort((a, b) => b - a);
