@@ -72,12 +72,17 @@
                         </div>
 
                         <!-- Check-in + Duration Row -->
-                        <div style="display:flex; justify-content:space-between; align-items:center; gap:10px; border-top: 1px solid var(--border-color); padding-top: 16px;">
+                        <div
+                            style="display:flex; justify-content:space-between; align-items:center; gap:10px; border-top: 1px solid var(--border-color); padding-top: 16px;">
                             <!-- Duration -->
-                            <div style="display:flex; flex-direction:column; gap:4px; cursor:pointer;" onclick="app.openTimePicker()">
-                                <label style="margin-bottom:0; cursor:pointer; color:var(--text-sub); font-size:12px; font-weight:600;">訓練時長</label>
-                                <div style="background:rgba(163,230,53,0.1); border:1px solid var(--primary); padding:6px 12px; border-radius:10px; font-weight:800; color:var(--primary); font-size:16px; text-align:center; min-width:60px;">
-                                    <span id="lbl-duration">60</span><span style="font-size:11px; margin-left:2px;">分</span>
+                            <div style="display:flex; flex-direction:column; gap:4px; cursor:pointer;"
+                                onclick="app.openTimePicker()">
+                                <label
+                                    style="margin-bottom:0; cursor:pointer; color:var(--text-sub); font-size:12px; font-weight:600;">訓練時長</label>
+                                <div
+                                    style="background:rgba(163,230,53,0.1); border:1px solid var(--primary); padding:6px 12px; border-radius:10px; font-weight:800; color:var(--primary); font-size:16px; text-align:center; min-width:60px;">
+                                    <span id="lbl-duration">60</span><span
+                                        style="font-size:11px; margin-left:2px;">分</span>
                                 </div>
                             </div>
 
@@ -86,14 +91,16 @@
                                 <div style="display:flex; flex-direction:column; gap:4px;">
                                     <label style="color:var(--text-sub); font-size:12px; font-weight:600;">開始</label>
                                     <div style="display:flex; gap:4px;">
-                                        <div id="display-start-time" class="time-display-btn" onclick="app.openTimePickerCustom('start')">00:00</div>
+                                        <div id="display-start-time" class="time-display-btn"
+                                            onclick="app.openTimePickerCustom('start')">00:00</div>
                                         <button class="punch-btn" onclick="app.punchNow('start')">Now</button>
                                     </div>
                                 </div>
                                 <div style="display:flex; flex-direction:column; gap:4px;">
                                     <label style="color:var(--text-sub); font-size:12px; font-weight:600;">結束</label>
                                     <div style="display:flex; gap:4px;">
-                                        <div id="display-end-time" class="time-display-btn" onclick="app.openTimePickerCustom('end')">00:00</div>
+                                        <div id="display-end-time" class="time-display-btn"
+                                            onclick="app.openTimePickerCustom('end')">00:00</div>
                                         <button class="punch-btn" onclick="app.punchNow('end')">Now</button>
                                     </div>
                                 </div>
@@ -132,7 +139,7 @@
 
                 <button class="btn-full-green"
                     style="margin-top:10px; margin-bottom:30px; font-size:18px; display:flex; justify-content:center; align-items:center; gap:8px;"
-                    onclick="app.manualSave()">
+                    onclick="app.manualSave(event)">
                     <span>💾</span> 儲存當天所有紀錄
                 </button>
             </div>
@@ -233,7 +240,8 @@
                         <button class="btn-outline-green flex-1" style="padding:12px; font-size:14px;"
                             onclick="document.getElementById('csv-upload').click()">匯入 CSV</button>
                     </div>
-                    <input type="file" id="csv-upload" style="display:none;" accept=".csv" onchange="app.importCSV(event)">
+                    <input type="file" id="csv-upload" style="display:none;" accept=".csv"
+                        onchange="app.importCSV(event)">
                 </div>
                 <hr class="divider">
                 <div class="form-group">
@@ -248,8 +256,31 @@
                             <input type="number" id="setting-height" class="custom-input">
                         </div>
                     </div>
+                    <div style="display:flex;gap:16px;margin-top:16px">
+                        <div class="flex-1">
+                            <span style="font-size:12px;color:#888;">體脂 (%)</span>
+                            <input type="number" id="setting-fat" class="custom-input" step="0.1">
+                        </div>
+                        <div class="flex-1">
+                            <div style="display:flex; justify-content:space-between; align-items:center;">
+                                <span style="font-size:12px;color:#888;">肌肉量 (<span
+                                        id="setting-muscle-unit">kg</span>)</span>
+                                <span style="font-size:10px; color:var(--primary); cursor:pointer; font-weight:bold;"
+                                    onclick="app.toggleSettingMuscleUnit()">切換</span>
+                            </div>
+                            <input type="number" id="setting-muscle" class="custom-input" step="0.1">
+                        </div>
+                    </div>
                 </div>
-                <button class="btn-full-green" onclick="app.saveSettings()">儲存設定</button>
+                <button class="btn-full-green" onclick="app.saveSettings(event)">儲存設定</button>
+
+                <!-- Body History -->
+                <div class="form-group" style="margin-top:24px;">
+                    <label style="color:#888;">歷史記錄</label>
+                    <div id="body-history-list" style="margin-top:12px; display:flex; flex-direction:column; gap:10px;">
+                        <!-- Items by JS -->
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -343,10 +374,12 @@
 
                         <!-- Cardio Mode -->
                         <div id="train-wheel-container" style="display:none; width:100%;">
-                            <div style="display:grid; grid-template-columns: 50px 1fr 50px; align-items:center; width:100%;">
+                            <div
+                                style="display:grid; grid-template-columns: 50px 1fr 50px; align-items:center; width:100%;">
                                 <div></div>
                                 <div style="display:flex; flex-direction:column; align-items:center; width:100%;">
-                                    <div class="field-label" id="label-field1-cardio" style="margin-bottom:8px;">訓練時間</div>
+                                    <div class="field-label" id="label-field1-cardio" style="margin-bottom:8px;">訓練時間
+                                    </div>
                                     <div class="inline-wheel-container" style="width:100%;">
                                         <div class="inline-wheel-bar"></div>
                                         <div class="inline-wheel-scroller" id="train-wheel-scroller">
@@ -355,13 +388,16 @@
                                             <div style="height:60px"></div>
                                         </div>
                                     </div>
-                                    <div style="text-align:center; margin-top:8px; font-weight:900; color:var(--primary);">
+                                    <div
+                                        style="text-align:center; margin-top:8px; font-weight:900; color:var(--primary);">
                                         <span id="train-display">30</span> <span class="unit-text">秒</span>
                                     </div>
                                 </div>
                                 <div class="unit-selector">
-                                    <button id="btn-unit-1-sec" class="unit-btn active" onclick="app.setUnit(1, '秒')">秒</button>
-                                    <button id="btn-unit-1-min" class="unit-btn" onclick="app.setUnit(1, '分')">分</button>
+                                    <button id="btn-unit-1-sec" class="unit-btn active"
+                                        onclick="app.setUnit(1, '秒')">秒</button>
+                                    <button id="btn-unit-1-min" class="unit-btn"
+                                        onclick="app.setUnit(1, '分')">分</button>
                                 </div>
                             </div>
                         </div>
@@ -370,7 +406,8 @@
                     <!-- Field 2 (Reps or Rest Time) -->
                     <div class="glass-card"
                         style="padding:14px; display:flex; flex-direction:column; align-items:center; justify-content:center; min-height:180px;">
-                        <div style="display:grid; grid-template-columns: 50px 1fr 50px; align-items:center; width:100%;">
+                        <div
+                            style="display:grid; grid-template-columns: 50px 1fr 50px; align-items:center; width:100%;">
                             <div></div>
                             <div style="display:flex; flex-direction:column; align-items:center; width:100%;">
                                 <div class="field-label" id="label-field2-title" style="margin-bottom:8px;">次數</div>
@@ -435,7 +472,8 @@
         </div>
 
         <!-- CUSTOM TIME PICKER MODAL (HH:MM AM/PM) -->
-        <div id="time-picker-modal" class="modal" onclick="if(event.target.id==='time-picker-modal') app.closeTimePickerCustom()">
+        <div id="time-picker-modal" class="modal"
+            onclick="if(event.target.id==='time-picker-modal') app.closeTimePickerCustom()">
             <div class="wheel-panel">
                 <div class="wheel-header">
                     <button class="btn-text" style="color:#888" onclick="app.closeTimePickerCustom()">取消</button>
@@ -444,7 +482,7 @@
                 </div>
                 <div class="wheel-container" style="display:flex; justify-content:center; align-items:center; gap:0;">
                     <div class="wheel-selection-bar"></div>
-                    
+
                     <!-- AM/PM -->
                     <div class="wheel-scroller" id="wheel-ampm" style="flex:1;">
                         <div style="height:80px"></div>
@@ -480,5 +518,7 @@
         }
     </script>
 </body>
+
+</html>
 
 </html>

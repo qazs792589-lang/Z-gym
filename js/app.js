@@ -156,7 +156,7 @@ const app = {
         const current = idx === 1 ? this.state.trainUnit : this.state.restUnit;
         this.setUnit(idx, current === '秒' ? '分' : '秒');
     },
-    
+
     toggleType(type) {
         let record = store.getDayRecord(this.state.viewDate);
         if (!record.types) record.types = [];
@@ -208,7 +208,7 @@ const app = {
                     const label = `${s.reps}${u2}`;
                     return `<div class="rep-badge" onclick="app.deleteSet('${act.exId}', '${s.id}')">${label}</div>`;
                 }).join('');
-                
+
                 const u1 = first.u1 || (isCardio ? '秒' : 'kg');
                 const weightLabel = isCardio ? `${first.kg}${u1}` : `${first.kg}kg`;
                 return `
@@ -218,7 +218,7 @@ const app = {
                 </div>`;
             }).join('');
 
-            const notesHtml = (act.note && act.note.trim() !== '') ? 
+            const notesHtml = (act.note && act.note.trim() !== '') ?
                 `<div style="margin-top:10px; padding-top:8px; border-top:1px solid rgba(255,255,255,0.05); font-size:12px; color:var(--text-sub); display:flex; flex-direction:column; gap:4px;">
                     <div>📝 ${act.note.trim()}</div>
                 </div>` : '';
@@ -238,7 +238,7 @@ const app = {
         }).join('');
     },
 
-    manualSave() {
+    manualSave(event) {
         let record = store.getDayRecord(this.state.viewDate);
         record.feeling = document.getElementById('input-feeling').value;
         record.notes = document.getElementById('input-notes').value;
@@ -247,10 +247,14 @@ const app = {
         if (record.startTime === '00:00') record.startTime = '';
         if (record.endTime === '00:00') record.endTime = '';
         store.saveDayRecord(this.state.viewDate, record);
-        const btn = event.currentTarget;
-        const orig = btn.innerHTML;
-        btn.innerHTML = '✅ 已儲存！';
-        setTimeout(() => btn.innerHTML = orig, 1200);
+
+        // Visual feedback if triggered by button
+        const btn = (event && event.currentTarget && event.currentTarget.tagName === 'BUTTON') ? event.currentTarget : null;
+        if (btn) {
+            const orig = btn.innerHTML;
+            btn.innerHTML = '✅ 已儲存！';
+            setTimeout(() => btn.innerHTML = orig, 1200);
+        }
     },
 
     punchNow(type) {
@@ -266,14 +270,14 @@ const app = {
     updatePunchTime() {
         const start = document.getElementById('display-start-time').innerText;
         const end = document.getElementById('display-end-time').innerText;
-        
+
         if (start !== '00:00' && end !== '00:00') {
             const [h1, m1] = start.split(':').map(Number);
             const [h2, m2] = end.split(':').map(Number);
-            
+
             let diff = (h2 * 60 + m2) - (h1 * 60 + m1);
             if (diff < 0) diff += 24 * 60; // Cross midnight
-            
+
             if (diff > 0) {
                 document.getElementById('lbl-duration').innerText = diff;
                 let record = store.getDayRecord(this.state.viewDate);
@@ -343,7 +347,7 @@ const app = {
         // Today's sets for this exercise
         const record = store.getDayRecord(this.state.viewDate);
         const act = record.activities.find(a => a.exId === exId);
-        
+
         // If we have an existing activity or a passed catName, sync the currentCat
         if (catName) {
             this.state.currentCat = { id: '', name: catName };
@@ -365,7 +369,7 @@ const app = {
         document.getElementById('input-kg-container').style.display = isCardio ? 'none' : 'block';
         document.getElementById('train-wheel-container').style.display = isCardio ? 'block' : 'none';
         document.getElementById('unit-selector-2').style.display = isCardio ? 'flex' : 'none';
-        
+
         // Update units UI
         this.setUnit(1, this.state.trainUnit);
         this.setUnit(2, isCardio ? this.state.restUnit : '下');
@@ -668,8 +672,6 @@ const app = {
         grid.innerHTML = '';
         const today = new Date();
 
-        // 核心邏輯：如果 weeksOffset 為 0 (初始載入)，顯示包含今天的過去 4 週。
-        // 如果 offset != 0，則對齊到目標月份的 1 號。
         let baseMonday;
         let mainMonth, mainYear;
 
@@ -680,11 +682,9 @@ const app = {
             mainMonth = midDate.getMonth();
             mainYear = midDate.getFullYear();
         } else {
-            // 計算目標月份 (以今天為基準加減 N 個月)
             const targetDate = new Date(today.getFullYear(), today.getMonth() + (this.state.weeksOffset / 4), 1);
             mainMonth = targetDate.getMonth();
             mainYear = targetDate.getFullYear();
-            // 找到該月 1 號是週幾，並回推到週一
             const firstDayOfMonth = new Date(mainYear, mainMonth, 1);
             const dayOfFirst = (firstDayOfMonth.getDay() + 6) % 7;
             baseMonday = new Date(mainYear, mainMonth, 1 - dayOfFirst);
@@ -692,7 +692,6 @@ const app = {
 
         document.getElementById('calendar-month-label').innerText = `${mainYear}年${mainMonth + 1}月`;
 
-        // 增加到 35 天 (5 週)
         for (let i = 0; i < 35; i++) {
             const d = new Date(baseMonday.getFullYear(), baseMonday.getMonth(), baseMonday.getDate() + i);
             const isToday = this.isToday(d);
@@ -700,7 +699,6 @@ const app = {
             const hasData = record.activities.length > 0;
             const isOtherMonth = d.getMonth() !== mainMonth;
 
-            // Category tags inside cell (保持原有邏輯)
             let tagsHtml = '';
             if (hasData) {
                 const cats = [...new Set(record.activities.map(a => a.catName))];
@@ -710,11 +708,8 @@ const app = {
             }
 
             const cell = document.createElement('div');
-            // 加入 other-month 處理非當月日期
             cell.className = `day-cell ${isToday ? 'today' : ''} ${hasData ? 'has-data' : ''} ${isOtherMonth ? 'other-month' : ''}`;
             cell.dataset.time = d.getTime();
-
-            // 日期純數字化：移除月份標記，僅顯示 d.getDate()
             cell.innerHTML = `
                 <div class="day-num">${d.getDate()}</div>
                 ${tagsHtml}
@@ -727,7 +722,6 @@ const app = {
             grid.appendChild(cell);
         }
         this.updateHistoryStats();
-        // Clear detail panel
         document.getElementById('day-detail-content').className = 'detail-empty';
         document.getElementById('day-detail-content').innerHTML = '<span style="font-size:18px;">📅</span><span style="font-size:12px;">點選日期查看</span>';
     },
@@ -759,11 +753,8 @@ const app = {
         }
 
         panel.className = '';
-
         const metaParts = [];
         if (record.feeling) metaParts.push(record.feeling);
-        
-        // Calculate dynamic duration
         let manual = record.duration || 0;
         let cardioMins = 0;
         record.activities.forEach(act => {
@@ -775,7 +766,6 @@ const app = {
         });
         const displayDuration = Math.max(manual, cardioMins);
         if (displayDuration > 0) metaParts.push(`${displayDuration}分`);
-        
         if (record.types && record.types.length) metaParts.push(record.types.join('、'));
 
         const exDetailsHtml = record.activities.map(act => {
@@ -786,7 +776,7 @@ const app = {
                 if (!groups[gKey]) groups[gKey] = [];
                 groups[gKey].push(s);
             });
-            
+
             const sortedKeys = Object.keys(groups).sort((a, b) => {
                 if (isCardio) {
                     const [vA, uA] = a.split('_');
@@ -808,7 +798,7 @@ const app = {
                     <div style="display:flex; flex-wrap:wrap; gap:4px;">${pills}</div>
                 </div>`;
             }).join('');
-            
+
             return `<div class="detail-ex-row">
                 <div class="detail-ex-name">${act.exName}</div>
                 ${rowsHtml}
@@ -830,7 +820,6 @@ const app = {
         const d = this.state.detailDate;
         if (!d) return;
         const next = new Date(d.getFullYear(), d.getMonth(), d.getDate() + delta);
-        // Update calendar highlight if the cell is visible
         document.querySelectorAll('.day-cell.selected').forEach(c => c.classList.remove('selected'));
         const cell = document.querySelector(`.day-cell[data-time="${next.getTime()}"]`);
         if (cell) cell.classList.add('selected');
@@ -839,7 +828,6 @@ const app = {
 
     jumpToDay(timestamp) {
         this.state.viewDate = new Date(timestamp);
-        // Switch to record tab
         document.querySelectorAll('.main-view').forEach(v => v.classList.remove('active'));
         document.querySelectorAll('.nav-item').forEach((el, i) => el.classList.toggle('active', i === 0));
         document.getElementById('view-record').classList.add('active');
@@ -852,15 +840,11 @@ const app = {
         const today = new Date();
         const mainYear = today.getFullYear();
         const mainMonth = today.getMonth();
-
-        // 本週：本週一到週日
-        const dow = today.getDay(); // 0=Sun
+        const dow = today.getDay();
         const mondayOffset = dow === 0 ? -6 : 1 - dow;
         const monday = new Date(mainYear, mainMonth, today.getDate() + mondayOffset);
 
         let wd = 0, wt = 0, md = 0, mt = 0;
-
-        // Helper to get total duration for a day (manual duration or sum of cardio minutes)
         const getDayDuration = (record) => {
             let manual = record.duration || 0;
             let cardioMins = 0;
@@ -874,25 +858,17 @@ const app = {
             return Math.max(manual, cardioMins);
         };
 
-        // 週統計 (Mon → Sun, 7 days)
         for (let i = 0; i < 7; i++) {
             const d = new Date(monday.getFullYear(), monday.getMonth(), monday.getDate() + i);
             const r = store.getDayRecord(d);
-            if (r.activities.length > 0) {
-                wd++;
-                wt += getDayDuration(r);
-            }
+            if (r.activities.length > 0) { wd++; wt += getDayDuration(r); }
         }
 
-        // 月統計 (1st → End of Month)
         const lastDay = new Date(mainYear, mainMonth + 1, 0).getDate();
         for (let i = 1; i <= lastDay; i++) {
             const d = new Date(mainYear, mainMonth, i);
             const r = store.getDayRecord(d);
-            if (r.activities.length > 0) {
-                md++;
-                mt += getDayDuration(r);
-            }
+            if (r.activities.length > 0) { md++; mt += getDayDuration(r); }
         }
 
         document.getElementById('hist-week-days').innerText = wd;
@@ -903,15 +879,20 @@ const app = {
 
     // ─── SUMMARY ─────────────────────────────────────────────
     generateSummary(range) {
-        // Update button active states
         ['today', 'week', 'month'].forEach(r => {
             const btn = document.getElementById(`btn-sum-${r}`);
             if (!btn) return;
             btn.className = r === range ? 'btn-full-green' : 'btn-outline-green w-100';
         });
         const today = new Date();
+        const st = store.getSettings();
         const days = range === 'today' ? 1 : (range === 'week' ? 7 : 30);
         let text = `【Fit Log - ${range === 'today' ? '今日' : range === 'week' ? '本週' : '本月'}訓練摘要】\n`;
+
+        if (range === 'today') {
+            text += `⚖️ 身體數據：${st.weight}kg / 體脂 ${st.fat}% / 肌肉 ${st.muscle}${st.muscleUnit || 'kg'}\n`;
+        }
+
         let totalVol = 0;
         for (let i = 0; i < days; i++) {
             const d = new Date(today.getFullYear(), today.getMonth(), today.getDate() - i);
@@ -942,7 +923,6 @@ const app = {
         if (navigator.clipboard) {
             navigator.clipboard.writeText(text).then(() => alert('複製成功！'));
         } else {
-            // Fallback
             const textArea = document.createElement("textarea");
             textArea.value = text;
             document.body.appendChild(textArea);
@@ -958,8 +938,56 @@ const app = {
         const s = store.getSettings();
         const wEl = document.getElementById('setting-weight');
         const hEl = document.getElementById('setting-height');
+        const fEl = document.getElementById('setting-fat');
+        const mEl = document.getElementById('setting-muscle');
+        const uEl = document.getElementById('setting-muscle-unit');
         if (wEl) wEl.value = s.weight;
         if (hEl) hEl.value = s.height;
+        if (fEl) fEl.value = s.fat || '';
+        if (mEl) mEl.value = s.muscle || '';
+        if (uEl) uEl.innerText = s.muscleUnit || 'kg';
+
+        this.renderBodyHistory();
+    },
+
+    toggleSettingMuscleUnit() {
+        const lbl = document.getElementById('setting-muscle-unit');
+        const next = lbl.innerText === 'kg' ? '%' : 'kg';
+        lbl.innerText = next;
+    },
+
+    renderBodyHistory() {
+        const history = store.getBodyHistory();
+        const list = document.getElementById('body-history-list');
+        if (!list) return;
+
+        if (history.length === 0) {
+            list.innerHTML = '<div style="color:#444; font-size:13px; text-align:center; padding:20px;">尚無記錄</div>';
+            return;
+        }
+
+        const sorted = [...history].sort((a, b) => new Date(b.date) - new Date(a.date));
+        list.innerHTML = sorted.map((h, idx) => `
+            <div class="glass-card" style="padding:12px; display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                <div>
+                    <div style="font-size:12px; color:var(--primary); font-weight:bold; margin-bottom:4px;">${h.date}</div>
+                    <div style="font-size:14px; font-weight:800; color:#fff;">
+                        ${h.weight}kg / ${h.fat}% / ${h.muscle}${h.muscleUnit || 'kg'}
+                    </div>
+                </div>
+                <span style="color:var(--danger); font-size:12px; cursor:pointer;" onclick="app.deleteBodyRecord(${idx})">刪除</span>
+            </div>
+        `).join('');
+    },
+
+    deleteBodyRecord(index) {
+        if (!confirm('確定刪除此筆記錄？')) return;
+        let history = store.getBodyHistory();
+        const sorted = [...history].sort((a, b) => new Date(b.date) - new Date(a.date));
+        const itemToDelete = sorted[index];
+        history = history.filter(h => h !== itemToDelete);
+        store.saveBodyHistory(history);
+        this.renderBodyHistory();
     },
 
     addTrainingType() {
@@ -989,19 +1017,40 @@ const app = {
         this.renderManageDB();
     },
 
-    saveSettings() {
-        store.saveSettings({
-            weight: parseFloat(document.getElementById('setting-weight').value) || 0,
-            height: parseFloat(document.getElementById('setting-height').value) || 0
-        });
-        alert('已儲存！');
+    saveSettings(event) {
+        const weight = parseFloat(document.getElementById('setting-weight').value) || 0;
+        const height = parseFloat(document.getElementById('setting-height').value) || 0;
+        const fat = parseFloat(document.getElementById('setting-fat').value) || 0;
+        const muscle = parseFloat(document.getElementById('setting-muscle').value) || 0;
+        const muscleUnit = document.getElementById('setting-muscle-unit').innerText;
+
+        const newSettings = { weight, height, fat, muscle, muscleUnit };
+        store.saveSettings(newSettings);
+
+        if (weight > 0 || fat > 0 || muscle > 0) {
+            const history = store.getBodyHistory();
+            const todayStr = new Date().toISOString().split('T')[0];
+            history.push({ date: todayStr, weight, fat, muscle, muscleUnit });
+            store.saveBodyHistory(history);
+        }
+
+        // Visual feedback
+        const btn = (event && event.currentTarget) ? event.currentTarget : null;
+        if (btn) {
+            const orig = btn.innerHTML;
+            btn.innerHTML = '✅ 已儲存！';
+            setTimeout(() => btn.innerHTML = orig, 1200);
+        } else {
+            alert('已儲存！');
+        }
+
+        this.renderSettingsView();
     },
 
     // ─── MANAGE DB ───────────────────────────────────────────
     renderManageDB() {
         const cats = store.getCategories();
         const types = store.getTrainingTypes();
-
         const typesCard = `
             <div class="glass-card" style="margin-bottom:12px; padding:15px;">
                 <div style="font-weight:bold; margin-bottom:12px;">訓練類型</div>
@@ -1040,7 +1089,6 @@ const app = {
                 </div>
             `;
         }).join('');
-
         document.getElementById('manage-db-list').innerHTML = typesCard + catsHtml;
     },
 
@@ -1068,46 +1116,24 @@ const app = {
         this.renderManageDB();
     },
 
-    // ─── CSV IMPORT/EXPORT ──────────────────────────────────
     exportCSV() {
         const keys = store.getAllDayKeys().sort();
         if (keys.length === 0) { alert('尚無資料可匯出'); return; }
-
-        let csv = '\uFEFF'; // BOM for Excel UTF-8
+        let csv = '\uFEFF';
         csv += '日期,心情,時長(分),當日備註,訓練類型,部位,動作,重量/訓練時間,重量單位,次數/休息時間,次數單位,組備註\n';
-
         keys.forEach(k => {
             const dateStr = k.replace('fitlog_v2_day_', '');
             const record = JSON.parse(localStorage.getItem(k));
             if (!record) return;
-
-            const baseInfo = [
-                dateStr,
-                record.feeling || '',
-                record.duration || '',
-                (record.notes || '').replace(/,/g, '，')
-            ];
-
+            const baseInfo = [dateStr, record.feeling || '', record.duration || '', (record.notes || '').replace(/,/g, '，')];
             const typeStr = (record.types || []).join('、');
-
             record.activities.forEach(act => {
                 act.sets.forEach(s => {
-                    const row = [
-                        ...baseInfo,
-                        typeStr,
-                        act.catName,
-                        act.exName,
-                        s.kg,
-                        s.u1 || (act.catName === '有氧' ? '秒' : 'kg'),
-                        s.reps,
-                        s.u2 || (act.catName === '有氧' ? '秒' : '下'),
-                        (s.note || '').replace(/,/g, '，')
-                    ];
+                    const row = [...baseInfo, typeStr, act.catName, act.exName, s.kg, s.u1 || (act.catName === '有氧' ? '秒' : 'kg'), s.reps, s.u2 || (act.catName === '有氧' ? '秒' : '下'), (s.note || '').replace(/,/g, '，')];
                     csv += row.join(',') + '\n';
                 });
             });
         });
-
         const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
         const link = document.createElement('a');
         link.href = URL.createObjectURL(blob);
@@ -1117,27 +1143,25 @@ const app = {
         document.body.removeChild(link);
     },
 
-    // ─── CUSTOM TIME PICKER ──────────────────────────────────
     initTimePickerCustom() {
-        // Init Hour Scroller (1-12)
         const hourInner = document.getElementById('wheel-hour-inner');
         let hourHtml = '';
         for (let i = 1; i <= 12; i++) hourHtml += `<div class="wheel-item" data-val="${i}">${i}</div>`;
-        hourInner.innerHTML = hourHtml;
+        if (hourInner) hourInner.innerHTML = hourHtml;
 
-        // Init Minute Scroller (00-59)
         const minuteInner = document.getElementById('wheel-minute-inner');
         let minuteHtml = '';
         for (let i = 0; i < 60; i++) minuteHtml += `<div class="wheel-item" data-val="${i}">${String(i).padStart(2, '0')}</div>`;
-        minuteInner.innerHTML = minuteHtml;
+        if (minuteInner) minuteInner.innerHTML = minuteHtml;
 
-        // Add scroll listeners to sync selection highlights
         ['ampm', 'hour', 'minute'].forEach(id => {
             const scroller = document.getElementById(`wheel-${id}`);
-            scroller.addEventListener('scroll', () => {
-                clearTimeout(this.state[`${id}ScrollTimeout`]);
-                this.state[`${id}ScrollTimeout`] = setTimeout(() => this.handleCustomWheelScroll(id), 50);
-            });
+            if (scroller) {
+                scroller.addEventListener('scroll', () => {
+                    clearTimeout(this.state[`${id}ScrollTimeout`]);
+                    this.state[`${id}ScrollTimeout`] = setTimeout(() => this.handleCustomWheelScroll(id), 50);
+                });
+            }
         });
     },
 
@@ -1145,15 +1169,10 @@ const app = {
         this.state.punchTarget = type;
         const currentStr = document.getElementById(`display-${type}-time`).innerText;
         let [h, m] = currentStr.split(':').map(Number);
-        
-        // Convert 24h to 12h
         let ampm = h < 12 ? 'AM' : 'PM';
         let h12 = h % 12;
         if (h12 === 0) h12 = 12;
-
         document.getElementById('time-picker-modal').style.display = 'flex';
-
-        // Set initial positions
         setTimeout(() => {
             this.setScrollerToValue('ampm', ampm === 'AM' ? 0 : 1);
             this.setScrollerToValue('hour', h12 - 1);
@@ -1163,20 +1182,23 @@ const app = {
 
     setScrollerToValue(id, index) {
         const scroller = document.getElementById(`wheel-${id}`);
-        scroller.scrollTop = index * 40;
-        this.handleCustomWheelScroll(id);
+        if (scroller) {
+            scroller.scrollTop = index * 40;
+            this.handleCustomWheelScroll(id);
+        }
     },
 
     handleCustomWheelScroll(id) {
         const scroller = document.getElementById(`wheel-${id}`);
+        if (!scroller) return;
         const items = scroller.querySelectorAll('.wheel-item');
         const center = scroller.scrollTop + 100;
-        let closest = null, minDist = Infinity, idx = -1;
+        let closest = null, minDist = Infinity;
         items.forEach((item, i) => {
             item.classList.remove('selected');
             const itemCenter = 80 + i * 40 + 20;
             const dist = Math.abs(itemCenter - center);
-            if (dist < minDist) { minDist = dist; closest = item; idx = i; }
+            if (dist < minDist) { minDist = dist; closest = item; }
         });
         if (closest) {
             closest.classList.add('selected');
@@ -1189,39 +1211,29 @@ const app = {
         const ampm = this.state.punchValues.ampm;
         let h = parseInt(this.state.punchValues.hour);
         const m = String(this.state.punchValues.minute).padStart(2, '0');
-
-        // Convert 12h back to 24h
         if (ampm === 'PM' && h < 12) h += 12;
         if (ampm === 'AM' && h === 12) h = 0;
-
         const timeStr = `${String(h).padStart(2, '0')}:${m}`;
         document.getElementById(`display-${this.state.punchTarget}-time`).innerText = timeStr;
         this.updatePunchTime();
         this.closeTimePickerCustom();
     },
 
-    closeTimePickerCustom() {
-        document.getElementById('time-picker-modal').style.display = 'none';
-    },
+    closeTimePickerCustom() { document.getElementById('time-picker-modal').style.display = 'none'; },
 
     importCSV(event) {
         const file = event.target.files[0];
         if (!file) return;
-
         const reader = new FileReader();
         reader.onload = (e) => {
             const content = e.target.result;
             const lines = content.split(/\r?\n/).filter(l => l.trim() !== '');
             if (lines.length <= 1) { alert('CSV 檔案無效或無資料'); return; }
-
             if (!confirm('匯入將會合併現有資料（若日期重複將會新增組數），確定嗎？')) return;
-
             const dayMap = {};
-
             for (let i = 1; i < lines.length; i++) {
                 const cols = lines[i].split(',');
                 if (cols.length < 7) continue;
-
                 const date = cols[0];
                 if (!dayMap[date]) {
                     const existing = store.getDayRecord(new Date(date));
@@ -1231,39 +1243,25 @@ const app = {
                     dayMap[date].notes = cols[3] || dayMap[date].notes;
                     dayMap[date].types = cols[4] ? cols[4].split('、') : dayMap[date].types;
                 }
-
-                const catName = cols[5];
-                const exName = cols[6];
-                const kg = cols[7];
-                const u1 = cols[8];
-                const reps = cols[9];
-                const u2 = cols[10];
-                const sNote = cols[11];
-
+                const catName = cols[5], exName = cols[6], kg = cols[7], u1 = cols[8], reps = cols[9], u2 = cols[10], sNote = cols[11];
                 let act = dayMap[date].activities.find(a => a.catName === catName && a.exName === exName);
                 if (!act) {
                     act = { exId: 'e' + Date.now() + Math.random(), exName, catName, sets: [] };
                     dayMap[date].activities.push(act);
                 }
-
-                act.sets.push({
-                    id: 's' + Date.now() + Math.random(),
-                    kg: parseFloat(kg) || 0,
-                    reps: parseFloat(reps) || 0,
-                    u1: u1,
-                    u2: u2,
-                    note: sNote || ''
-                });
+                act.sets.push({ id: 's' + Date.now() + Math.random(), kg: parseFloat(kg) || 0, reps: parseFloat(reps) || 0, u1, u2, note: sNote || '' });
             }
-
-            for (const date in dayMap) {
-                store.saveDayRecord(new Date(date), dayMap[date]);
-            }
-
+            for (const date in dayMap) store.saveDayRecord(new Date(date), dayMap[date]);
             alert('匯入完成！');
             location.reload();
         };
         reader.readAsText(file);
+    }
+};
+
+document.addEventListener('DOMContentLoaded', () => app.init());
+        };
+reader.readAsText(file);
     }
 };
 

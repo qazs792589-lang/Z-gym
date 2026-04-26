@@ -9,13 +9,13 @@ const DEFAULT_CATS = [
 ];
 
 const DEFAULT_EXS = {
-    'c1': [{id:'e1', name:'槓鈴臥推'}, {id:'e2', name:'啞鈴飛鳥'}, {id:'e3', name:'機械胸推'}],
-    'c2': [{id:'e4', name:'滑輪下拉'}, {id:'e5', name:'槓鈴划船'}, {id:'e6', name:'引體向上'}],
-    'c3': [{id:'e7', name:'槓鈴深蹲'}, {id:'e8', name:'腿推機'}, {id:'e9', name:'羅馬尼亞硬舉'}],
-    'c4': [{id:'e10', name:'啞鈴肩推'}, {id:'e11', name:'側平舉'}, {id:'e12', name:'滑輪面拉'}],
-    'c5': [{id:'e13', name:'二頭彎舉'}, {id:'e14', name:'三頭下壓'}],
-    'c6': [{id:'e15', name:'捲腹'}, {id:'e16', name:'棒式'}],
-    'c7': [{id:'e17', name:'跑步機'}, {id:'e18', name:'飛輪'}, {id:'e19', name:'橢圓機'}, {id:'e20', name:'划船機'}]
+    'c1': [{ id: 'e1', name: '槓鈴臥推' }, { id: 'e2', name: '啞鈴飛鳥' }, { id: 'e3', name: '機械胸推' }],
+    'c2': [{ id: 'e4', name: '滑輪下拉' }, { id: 'e5', name: '槓鈴划船' }, { id: 'e6', name: '引體向上' }],
+    'c3': [{ id: 'e7', name: '槓鈴深蹲' }, { id: 'e8', name: '腿推機' }, { id: 'e9', name: '羅馬尼亞硬舉' }],
+    'c4': [{ id: 'e10', name: '啞鈴肩推' }, { id: 'e11', name: '側平舉' }, { id: 'e12', name: '滑輪面拉' }],
+    'c5': [{ id: 'e13', name: '二頭彎舉' }, { id: 'e14', name: '三頭下壓' }],
+    'c6': [{ id: 'e15', name: '捲腹' }, { id: 'e16', name: '棒式' }],
+    'c7': [{ id: 'e17', name: '跑步機' }, { id: 'e18', name: '飛輪' }, { id: 'e19', name: '橢圓機' }, { id: 'e20', name: '划船機' }]
 };
 
 const store = {
@@ -116,5 +116,12 @@ const store = {
             if (k && k.startsWith('fitlog_v2_day_')) keys.push(k);
         }
         return keys;
-    }
+    },
+
+    // Body History
+    getBodyHistory() {
+        try { return JSON.parse(localStorage.getItem('fitlog_v2_body_history')) || []; }
+        catch { return []; }
+    },
+    saveBodyHistory(history) { localStorage.setItem('fitlog_v2_body_history', JSON.stringify(history)); }
 };
