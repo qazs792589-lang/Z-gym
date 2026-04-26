@@ -32,7 +32,7 @@ const store = {
     },
 
     emptyRecord() {
-        return { duration: 60, feeling: '正常發揮', notes: '', types: [], activities: [] };
+        return { duration: 60, feeling: '正常發揮', notes: '', types: [], activities: [], startTime: '', endTime: '' };
     },
 
     saveDayRecord(date, record) {

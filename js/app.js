@@ -21,6 +21,7 @@ const app = {
         this.renderSettingsView();
         this.initRepsWheel();
         this.initTrainWheel();
+        this.initTimePickerCustom();
     },
 
     // ─── NAVIGATION ──────────────────────────────────────────
@@ -106,6 +107,8 @@ const app = {
         this.updateStats(record);
         this.renderTypeChips(record.types || []);
         document.getElementById('lbl-duration').innerText = record.duration || 60;
+        document.getElementById('display-start-time').innerText = record.startTime || '00:00';
+        document.getElementById('display-end-time').innerText = record.endTime || '00:00';
         document.getElementById('input-feeling').value = record.feeling || '正常發揮';
         document.getElementById('input-notes').value = record.notes || '';
         this.renderActionsList(record.activities || []);
@@ -233,11 +236,53 @@ const app = {
         let record = store.getDayRecord(this.state.viewDate);
         record.feeling = document.getElementById('input-feeling').value;
         record.notes = document.getElementById('input-notes').value;
+        record.startTime = document.getElementById('display-start-time').innerText;
+        record.endTime = document.getElementById('display-end-time').innerText;
+        if (record.startTime === '00:00') record.startTime = '';
+        if (record.endTime === '00:00') record.endTime = '';
         store.saveDayRecord(this.state.viewDate, record);
         const btn = event.currentTarget;
         const orig = btn.innerHTML;
         btn.innerHTML = '✅ 已儲存！';
         setTimeout(() => btn.innerHTML = orig, 1200);
+    },
+
+    punchNow(type) {
+        const now = new Date();
+        const timeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+        const btn = document.getElementById(`display-${type}-time`);
+        if (btn) {
+            btn.innerText = timeStr;
+            this.updatePunchTime();
+        }
+    },
+
+    updatePunchTime() {
+        const start = document.getElementById('display-start-time').innerText;
+        const end = document.getElementById('display-end-time').innerText;
+        
+        if (start !== '00:00' && end !== '00:00') {
+            const [h1, m1] = start.split(':').map(Number);
+            const [h2, m2] = end.split(':').map(Number);
+            
+            let diff = (h2 * 60 + m2) - (h1 * 60 + m1);
+            if (diff < 0) diff += 24 * 60; // Cross midnight
+            
+            if (diff > 0) {
+                document.getElementById('lbl-duration').innerText = diff;
+                let record = store.getDayRecord(this.state.viewDate);
+                record.duration = diff;
+                record.startTime = start;
+                record.endTime = end;
+                store.saveDayRecord(this.state.viewDate, record);
+                this.updateStats(record);
+            }
+        } else {
+            let record = store.getDayRecord(this.state.viewDate);
+            if (start !== '00:00') record.startTime = start;
+            if (end !== '00:00') record.endTime = end;
+            store.saveDayRecord(this.state.viewDate, record);
+        }
     },
 
     // ─── CATEGORY PICKER ─────────────────────────────────────
@@ -1064,6 +1109,93 @@ const app = {
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
+    },
+
+    // ─── CUSTOM TIME PICKER ──────────────────────────────────
+    initTimePickerCustom() {
+        // Init Hour Scroller (1-12)
+        const hourInner = document.getElementById('wheel-hour-inner');
+        let hourHtml = '';
+        for (let i = 1; i <= 12; i++) hourHtml += `<div class="wheel-item" data-val="${i}">${i}</div>`;
+        hourInner.innerHTML = hourHtml;
+
+        // Init Minute Scroller (00-59)
+        const minuteInner = document.getElementById('wheel-minute-inner');
+        let minuteHtml = '';
+        for (let i = 0; i < 60; i++) minuteHtml += `<div class="wheel-item" data-val="${i}">${String(i).padStart(2, '0')}</div>`;
+        minuteInner.innerHTML = minuteHtml;
+
+        // Add scroll listeners to sync selection highlights
+        ['ampm', 'hour', 'minute'].forEach(id => {
+            const scroller = document.getElementById(`wheel-${id}`);
+            scroller.addEventListener('scroll', () => {
+                clearTimeout(this.state[`${id}ScrollTimeout`]);
+                this.state[`${id}ScrollTimeout`] = setTimeout(() => this.handleCustomWheelScroll(id), 50);
+            });
+        });
+    },
+
+    openTimePickerCustom(type) {
+        this.state.punchTarget = type;
+        const currentStr = document.getElementById(`display-${type}-time`).innerText;
+        let [h, m] = currentStr.split(':').map(Number);
+        
+        // Convert 24h to 12h
+        let ampm = h < 12 ? 'AM' : 'PM';
+        let h12 = h % 12;
+        if (h12 === 0) h12 = 12;
+
+        document.getElementById('time-picker-modal').style.display = 'flex';
+
+        // Set initial positions
+        setTimeout(() => {
+            this.setScrollerToValue('ampm', ampm === 'AM' ? 0 : 1);
+            this.setScrollerToValue('hour', h12 - 1);
+            this.setScrollerToValue('minute', m);
+        }, 50);
+    },
+
+    setScrollerToValue(id, index) {
+        const scroller = document.getElementById(`wheel-${id}`);
+        scroller.scrollTop = index * 40;
+        this.handleCustomWheelScroll(id);
+    },
+
+    handleCustomWheelScroll(id) {
+        const scroller = document.getElementById(`wheel-${id}`);
+        const items = scroller.querySelectorAll('.wheel-item');
+        const center = scroller.scrollTop + 100;
+        let closest = null, minDist = Infinity, idx = -1;
+        items.forEach((item, i) => {
+            item.classList.remove('selected');
+            const itemCenter = 80 + i * 40 + 20;
+            const dist = Math.abs(itemCenter - center);
+            if (dist < minDist) { minDist = dist; closest = item; idx = i; }
+        });
+        if (closest) {
+            closest.classList.add('selected');
+            if (!this.state.punchValues) this.state.punchValues = {};
+            this.state.punchValues[id] = closest.getAttribute('data-val');
+        }
+    },
+
+    confirmTimePickerCustom() {
+        const ampm = this.state.punchValues.ampm;
+        let h = parseInt(this.state.punchValues.hour);
+        const m = String(this.state.punchValues.minute).padStart(2, '0');
+
+        // Convert 12h back to 24h
+        if (ampm === 'PM' && h < 12) h += 12;
+        if (ampm === 'AM' && h === 12) h = 0;
+
+        const timeStr = `${String(h).padStart(2, '0')}:${m}`;
+        document.getElementById(`display-${this.state.punchTarget}-time`).innerText = timeStr;
+        this.updatePunchTime();
+        this.closeTimePickerCustom();
+    },
+
+    closeTimePickerCustom() {
+        document.getElementById('time-picker-modal').style.display = 'none';
     },
 
     importCSV(event) {

@@ -62,22 +62,41 @@
                             style="background:var(--border-color); border:none; color:var(--primary); width:40px; height:40px; border-radius:10px; font-size:22px; cursor:pointer; flex-shrink:0;">›</button>
                     </div>
 
-                    <div style="display:flex; justify-content:space-between; align-items:flex-start;">
-                        <!-- Left: Types -->
-                        <div style="flex:1;">
+                    <div style="display:flex; flex-direction:column; gap:16px;">
+                        <!-- Training Types -->
+                        <div>
                             <label style="margin-bottom:10px; display:block;">訓練類型</label>
                             <div class="chip-group" id="training-types-container">
                                 <!-- Chips by JS -->
                             </div>
                         </div>
-                        <!-- Right: Duration -->
-                        <div style="display:flex; flex-direction:column; align-items:flex-end; gap:6px; cursor:pointer; margin-left:15px; flex-shrink:0;"
-                            onclick="app.openTimePicker()">
-                            <label
-                                style="margin-bottom:0; cursor:pointer; color:var(--text-sub); font-size:13px; font-weight:600;">時長</label>
-                            <div
-                                style="background:rgba(163,230,53,0.1); border:1px solid var(--primary); padding:4px 10px; border-radius:8px; font-weight:800; color:var(--primary); font-size:14px;">
-                                <span id="lbl-duration">60</span><span style="font-size:11px; margin-left:2px;">分</span>
+
+                        <!-- Check-in + Duration Row -->
+                        <div style="display:flex; justify-content:space-between; align-items:center; gap:10px; border-top: 1px solid var(--border-color); padding-top: 16px;">
+                            <!-- Duration -->
+                            <div style="display:flex; flex-direction:column; gap:4px; cursor:pointer;" onclick="app.openTimePicker()">
+                                <label style="margin-bottom:0; cursor:pointer; color:var(--text-sub); font-size:12px; font-weight:600;">訓練時長</label>
+                                <div style="background:rgba(163,230,53,0.1); border:1px solid var(--primary); padding:6px 12px; border-radius:10px; font-weight:800; color:var(--primary); font-size:16px; text-align:center; min-width:60px;">
+                                    <span id="lbl-duration">60</span><span style="font-size:11px; margin-left:2px;">分</span>
+                                </div>
+                            </div>
+
+                            <!-- Punch In/Out -->
+                            <div style="flex:1; display:flex; gap:8px; justify-content:flex-end;">
+                                <div style="display:flex; flex-direction:column; gap:4px;">
+                                    <label style="color:var(--text-sub); font-size:12px; font-weight:600;">開始</label>
+                                    <div style="display:flex; gap:4px;">
+                                        <div id="display-start-time" class="time-display-btn" onclick="app.openTimePickerCustom('start')">00:00</div>
+                                        <button class="punch-btn" onclick="app.punchNow('start')">Now</button>
+                                    </div>
+                                </div>
+                                <div style="display:flex; flex-direction:column; gap:4px;">
+                                    <label style="color:var(--text-sub); font-size:12px; font-weight:600;">結束</label>
+                                    <div style="display:flex; gap:4px;">
+                                        <div id="display-end-time" class="time-display-btn" onclick="app.openTimePickerCustom('end')">00:00</div>
+                                        <button class="punch-btn" onclick="app.punchNow('end')">Now</button>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -409,6 +428,42 @@
                     <div class="wheel-scroller" id="wheel-scroller" onscroll="app.handleWheelScroll()">
                         <div style="height:80px"></div>
                         <div id="wheel-items-inner"></div>
+                        <div style="height:80px"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- CUSTOM TIME PICKER MODAL (HH:MM AM/PM) -->
+        <div id="time-picker-modal" class="modal" onclick="if(event.target.id==='time-picker-modal') app.closeTimePickerCustom()">
+            <div class="wheel-panel">
+                <div class="wheel-header">
+                    <button class="btn-text" style="color:#888" onclick="app.closeTimePickerCustom()">取消</button>
+                    <h3 id="time-picker-title">選擇時間</h3>
+                    <button class="btn-text highlight" onclick="app.confirmTimePickerCustom()">確定</button>
+                </div>
+                <div class="wheel-container" style="display:flex; justify-content:center; align-items:center; gap:0;">
+                    <div class="wheel-selection-bar"></div>
+                    
+                    <!-- AM/PM -->
+                    <div class="wheel-scroller" id="wheel-ampm" style="flex:1;">
+                        <div style="height:80px"></div>
+                        <div class="wheel-item" data-val="AM">上午</div>
+                        <div class="wheel-item" data-val="PM">下午</div>
+                        <div style="height:80px"></div>
+                    </div>
+
+                    <!-- Hour -->
+                    <div class="wheel-scroller" id="wheel-hour" style="flex:1;">
+                        <div style="height:80px"></div>
+                        <div id="wheel-hour-inner"></div>
+                        <div style="height:80px"></div>
+                    </div>
+
+                    <!-- Minute -->
+                    <div class="wheel-scroller" id="wheel-minute" style="flex:1;">
+                        <div style="height:80px"></div>
+                        <div id="wheel-minute-inner"></div>
                         <div style="height:80px"></div>
                     </div>
                 </div>
