@@ -1048,7 +1048,53 @@ const app = {
             return;
         }
 
-        const sorted = [...history].sort((a, b) => new Date(a.date) - new Date(b.date)).slice(-10);
+        let sorted = [...history].sort((a, b) => new Date(a.date) - new Date(b.date));
+        const currentMUnit = document.getElementById('setting-muscle-unit').innerText;
+        const currentFUnit = document.getElementById('setting-fat-unit').innerText;
+
+        // 動態壓縮與平滑處理 (Downsampling to max 15 points)
+        if (sorted.length > 15) {
+            const downsampled = [];
+            const bucketSize = sorted.length / 15;
+            for (let i = 0; i < 15; i++) {
+                const start = Math.floor(i * bucketSize);
+                const end = Math.floor((i + 1) * bucketSize);
+                const bucket = sorted.slice(start, end);
+                if (bucket.length > 0) {
+                    // 為了計算平均值，先將該桶內的數據單位統一
+                    const normalized = bucket.map(d => {
+                        let f = d.fat || 0;
+                        if (d.fatUnit && d.fatUnit !== currentFUnit) {
+                            f = currentFUnit === 'kg' ? d.weight * (f / 100) : (f / d.weight) * 100;
+                        }
+                        let m = d.muscle || 0;
+                        if (d.muscleUnit && d.muscleUnit !== currentMUnit) {
+                            m = currentMUnit === '%' ? (m / d.weight) * 100 : d.weight * (m / 100);
+                        } else if (!d.muscleUnit && currentMUnit === '%') {
+                            m = (m / d.weight) * 100;
+                        }
+                        return { weight: d.weight, fat: f, muscle: m };
+                    });
+
+                    const avgW = normalized.reduce((s, v) => s + v.weight, 0) / bucket.length;
+                    const avgF = normalized.reduce((s, v) => s + v.fat, 0) / bucket.length;
+                    const avgM = normalized.reduce((s, v) => s + v.muscle, 0) / bucket.length;
+                    const midIdx = Math.floor(bucket.length / 2);
+                    
+                    downsampled.push({
+                        date: bucket[midIdx].date,
+                        weight: avgW,
+                        fat: avgF,
+                        muscle: avgM,
+                        fatUnit: currentFUnit,
+                        muscleUnit: currentMUnit,
+                        isAveraged: bucket.length > 1
+                    });
+                }
+            }
+            sorted = downsampled;
+        }
+
         const w = container.clientWidth || 200;
         const h = container.clientHeight || 150;
         const padT = 30; 
@@ -1056,11 +1102,9 @@ const app = {
         const padL = 40; 
         const padR = 40; 
 
-        const currentMUnit = document.getElementById('setting-muscle-unit').innerText;
-        const currentFUnit = document.getElementById('setting-fat-unit').innerText;
-
         const weights = sorted.map(d => d.weight);
         const fats = sorted.map(d => {
+            if (d.isAveraged) return d.fat; // 已經是平滑後的數據
             let val = d.fat || 0;
             if (d.fatUnit && d.fatUnit !== currentFUnit) {
                 if (currentFUnit === 'kg') val = d.weight * (val / 100);
@@ -1069,6 +1113,7 @@ const app = {
             return val;
         });
         const muscles = sorted.map(d => {
+            if (d.isAveraged) return d.muscle; // 已經是平滑後的數據
             let val = d.muscle || 0;
             if (d.muscleUnit && d.muscleUnit !== currentMUnit) {
                 if (currentMUnit === '%') val = (val / d.weight) * 100;
@@ -1121,8 +1166,9 @@ const app = {
                     <text x="${w - padR + 10}" y="${getY(v, rangeR)}" fill="#fff" font-size="11" font-weight="900" text-anchor="start" alignment-baseline="middle">${v.toFixed(1)}</text>
                 `).join('')}
 
-                <!-- X 軸日期 -->
+                <!-- X 軸日期 (數據點多於 10 個時，每隔一個顯示以防重疊) -->
                 ${sorted.map((d, i) => {
+                    if (sorted.length > 10 && i % 2 !== 0) return ''; 
                     const dateObj = new Date(d.date);
                     return `<text x="${getX(i)}" y="${h - padB + 18}" fill="#888" font-size="9" text-anchor="middle">${dateObj.getMonth() + 1}/${dateObj.getDate()}</text>`;
                 }).join('')}
