@@ -1069,38 +1069,42 @@ const app = {
 
         container.innerHTML = `
             <svg width="100%" height="100%" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" style="overflow:visible">
-                <!-- 座標軸線 -->
+                <!-- 座標軸與網格線 -->
                 <line x1="${padL}" y1="${h - padB}" x2="${w - padR}" y2="${h - padB}" stroke="#333" stroke-width="1" />
                 <line x1="${padL}" y1="${padT}" x2="${padL}" y2="${h - padB}" stroke="#333" stroke-width="1" />
                 
-                <!-- Y 軸標籤 (左: 體重) -->
-                ${ticksL.map(v => `<text x="${padL - 5}" y="${getY(v, rangeL)}" fill="#888" font-size="8" text-anchor="end" alignment-baseline="middle">${v.toFixed(1)}</text>`).join('')}
+                ${ticksL.map(v => `
+                    <line x1="${padL}" y1="${getY(v, rangeL)}" x2="${w - padR}" y2="${getY(v, rangeL)}" stroke="#333" stroke-width="0.5" stroke-dasharray="2,2" />
+                    <text x="${padL - 10}" y="${getY(v, rangeL)}" fill="#fff" font-size="12" font-weight="900" text-anchor="end" alignment-baseline="middle">${v.toFixed(1)}</text>
+                `).join('')}
                 
-                <!-- Y 軸標籤 (右: 體脂/肌肉) -->
-                ${ticksR.map(v => `<text x="${w - padR + 5}" y="${getY(v, rangeR)}" fill="#888" font-size="8" text-anchor="start" alignment-baseline="middle">${v.toFixed(1)}</text>`).join('')}
+                ${ticksR.map(v => `
+                    <text x="${w - padR + 10}" y="${getY(v, rangeR)}" fill="#fff" font-size="12" font-weight="900" text-anchor="start" alignment-baseline="middle">${v.toFixed(1)}</text>
+                `).join('')}
 
                 <!-- X 軸日期 -->
                 ${sorted.map((d, i) => {
                     if (i === 0 || i === sorted.length - 1 || i === Math.floor(sorted.length / 2)) {
                         const dateObj = new Date(d.date);
-                        return `<text x="${getX(i)}" y="${h - padB + 15}" fill="#888" font-size="8" text-anchor="middle">${dateObj.getMonth() + 1}/${dateObj.getDate()}</text>`;
+                        return `<text x="${getX(i)}" y="${h - padB + 18}" fill="#888" font-size="9" text-anchor="middle">${dateObj.getMonth() + 1}/${dateObj.getDate()}</text>`;
                     }
                     return '';
                 }).join('')}
 
                 <!-- 數據線 -->
-                <path d="${weightPath}" fill="none" stroke="var(--primary)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />
-                <path d="${fatPath}" fill="none" stroke="#f59e0b" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="3,2" />
-                <path d="${musclePath}" fill="none" stroke="#8b5cf6" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+                <path d="${weightPath}" fill="none" stroke="var(--primary)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />
+                <path d="${fatPath}" fill="none" stroke="#f59e0b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="4,3" />
+                <path d="${musclePath}" fill="none" stroke="#8b5cf6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
                 
                 ${sorted.map((d, i) => `
-                    <circle cx="${getX(i)}" cy="${getY(weights[i], rangeL)}" r="2.5" fill="var(--primary)" />
-                    <circle cx="${getX(i)}" cy="${getY(fats[i], rangeR)}" r="1.5" fill="#f59e0b" />
-                    <circle cx="${getX(i)}" cy="${getY(muscles[i], rangeR)}" r="1.5" fill="#8b5cf6" />
+                    <circle cx="${getX(i)}" cy="${getY(weights[i], rangeL)}" r="3" fill="var(--primary)" stroke="#000" stroke-width="1" />
+                    <circle cx="${getX(i)}" cy="${getY(fats[i], rangeR)}" r="2" fill="#f59e0b" />
+                    <circle cx="${getX(i)}" cy="${getY(muscles[i], rangeR)}" r="2" fill="#8b5cf6" />
                 `).join('')}
 
-                <text x="${padL}" y="${padT - 10}" fill="var(--primary)" font-size="9" font-weight="bold">kg</text>
-                <text x="${w - padR}" y="${padT - 10}" fill="#f59e0b" font-size="9" font-weight="bold" text-anchor="end">${currentUnit === '%' ? '%' : 'kg'}</text>
+                <!-- 單位標示 -->
+                <text x="${padL}" y="${padT - 12}" fill="var(--primary)" font-size="11" font-weight="900">kg</text>
+                <text x="${w - padR}" y="${padT - 12}" fill="#f59e0b" font-size="11" font-weight="900" text-anchor="end">${currentUnit === '%' ? '%' : 'kg'}</text>
             </svg>
         `;
     },

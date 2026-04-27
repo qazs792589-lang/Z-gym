@@ -280,23 +280,23 @@
                 <!-- Body History -->
                 <div class="form-group" style="margin-top:24px;">
                     <label style="color:#888;">歷史紀錄與趨勢</label>
-                    <div style="display:flex; gap:16px; margin-top:12px; align-items: flex-start;">
-                        <div id="body-chart-container" style="flex: 1; background: rgba(255,255,255,0.03); border-radius: 12px; padding: 12px; min-height: 200px; display: flex; flex-direction: column;">
+                    <div style="display:flex; gap:16px; margin-top:12px; align-items: stretch;">
+                        <div id="body-chart-container" style="flex: 1; background: rgba(255,255,255,0.03); border-radius: 12px; padding: 16px; height: 350px; display: flex; flex-direction: column;">
                             <!-- Chart Legend -->
-                            <div style="display:flex; gap:10px; margin-bottom:10px; font-size:10px; color:#888;">
-                                <div style="display:flex; align-items:center; gap:4px;">
-                                    <div style="width:8px; height:8px; background:var(--primary); border-radius:2px;"></div>體重
+                            <div style="display:flex; gap:12px; margin-bottom:12px; font-size:11px; color:#aaa; font-weight:bold;">
+                                <div style="display:flex; align-items:center; gap:6px;">
+                                    <div style="width:10px; height:10px; background:var(--primary); border-radius:2px;"></div>體重
                                 </div>
-                                <div style="display:flex; align-items:center; gap:4px;">
-                                    <div style="width:8px; height:8px; background:#f59e0b; border-radius:2px;"></div>體脂
+                                <div style="display:flex; align-items:center; gap:6px;">
+                                    <div style="width:10px; height:10px; background:#f59e0b; border-radius:2px;"></div>體脂
                                 </div>
-                                <div style="display:flex; align-items:center; gap:4px;">
-                                    <div style="width:8px; height:8px; background:#8b5cf6; border-radius:2px;"></div>肌肉
+                                <div style="display:flex; align-items:center; gap:6px;">
+                                    <div style="width:10px; height:10px; background:#8b5cf6; border-radius:2px;"></div>肌肉
                                 </div>
                             </div>
-                            <div id="body-chart-svg" style="flex:1;"></div>
+                            <div id="body-chart-svg" style="flex:1; min-height: 0;"></div>
                         </div>
-                        <div id="body-history-list" class="custom-scrollbar" style="flex: 1.2; display:flex; flex-direction:column; gap:8px; max-height: 250px; overflow-y: auto; padding-right: 4px;">
+                        <div id="body-history-list" class="custom-scrollbar" style="flex: 1.2; display:flex; flex-direction:column; gap:8px; height: 350px; overflow-y: auto; padding-right: 8px;">
                             <!-- Items by JS -->
                         </div>
                     </div>
