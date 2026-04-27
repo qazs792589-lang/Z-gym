@@ -245,6 +245,14 @@
                 </div>
                 <hr class="divider">
                 <div class="glass-card" style="padding:15px; margin-top:10px;">
+                    <div style="margin-bottom:16px;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                            <span style="font-size:12px;color:#888;">智慧貼上內容 (OMRON/CSV)</span>
+                            <button class="btn-outline-green" style="padding:4px 12px; font-size:12px;" onclick="app.smartImport()">確定</button>
+                        </div>
+                        <textarea id="smart-paste-input" class="summary-textarea" style="height:80px; margin-top:8px; font-size:11px; font-family: monospace; min-height: 80px;" 
+                            placeholder="在此貼上數據內容..."></textarea>
+                    </div>
                     <div style="margin-bottom:12px;">
                         <span style="font-size:12px;color:#888;">紀錄日期</span>
                         <input type="date" id="setting-date" class="custom-input" style="width:100%; margin-top:4px;">
@@ -275,6 +283,7 @@
                     </div>
                 </div>
                 <button class="btn-full-green" onclick="app.saveSettings(event)">儲存設定</button>
+                <hr class="divider">
 
                 <!-- Body History -->
                 <div class="form-group" style="margin-top:24px;">

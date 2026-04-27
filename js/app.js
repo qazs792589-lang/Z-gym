@@ -1124,15 +1124,17 @@ const app = {
             return val;
         });
 
-        const getRange = (arr, buffer = 2) => {
+        const getRange = (arr, buffer = 0.5) => {
             const min = Math.min(...arr);
             const max = Math.max(...arr);
             const range = max - min;
-            return { min: Math.max(0, min - (range * 0.1 || buffer)), max: max + (range * 0.1 || buffer) };
+            // 使用較小的邊距，讓變化更明顯。若數據全相等則使用預設 buffer
+            const margin = range > 0 ? range * 0.15 : buffer;
+            return { min: Math.max(0, min - margin), max: max + margin };
         };
 
-        const rangeL = getRange(weights, 2);
-        const rangeR = getRange([...fats, ...muscles], 5);
+        const rangeL = getRange(weights, 1);
+        const rangeR = getRange([...fats, ...muscles], 0.8);
 
         const getY = (val, range) => h - padB - ((val - range.min) / (range.max - range.min || 1)) * (h - padT - padB);
         const getX = (i) => padL + (i / (sorted.length - 1 || 1)) * (w - padL - padR);
@@ -1337,6 +1339,60 @@ const app = {
         }
 
         this.renderSettingsView();
+    },
+
+    smartImport() {
+        const input = document.getElementById('smart-paste-input').value.trim();
+        if (!input) { alert('請先貼上數據內容'); return; }
+
+        const lines = input.split('\n');
+        let importedCount = 0;
+        let history = store.getBodyHistory();
+        
+        // 用一個物件來暫存處理過的日期，避免同一天重複匯入多次（以最後一筆為準）
+        const tempHistoryMap = {};
+        // 先將現有歷史存入 Map
+        history.forEach(h => tempHistoryMap[h.date] = h);
+
+        lines.forEach(line => {
+            if (!line.trim()) return;
+            // 處理 CSV 格式：去掉雙引號並根據逗號分割
+            const cols = line.split(',').map(c => c.replace(/"/g, '').trim());
+            
+            // 跳過表頭或無效列 (歐姆龍格式第 0 欄是日期，第 2 欄是體重，第 3 欄是體脂，第 8 欄是肌肉量)
+            if (cols.length < 9 || cols[0].includes('測量日期')) return;
+
+            // 轉換日期格式： "2026/01/06 12:19" -> "2026-01-06"
+            const datePart = cols[0].split(' ')[0];
+            const dateRaw = datePart.replace(/\//g, '-'); 
+            
+            const weight = parseFloat(cols[2]);
+            const fat = parseFloat(cols[3]);
+            const muscle = parseFloat(cols[8]);
+
+            if (!isNaN(weight) && dateRaw.match(/^\d{4}-\d{2}-\d{2}$/)) {
+                tempHistoryMap[dateRaw] = {
+                    date: dateRaw,
+                    weight: weight,
+                    fat: isNaN(fat) ? 0 : fat,
+                    muscle: isNaN(muscle) ? 0 : muscle,
+                    muscleUnit: 'kg',
+                    fatUnit: '%'
+                };
+                importedCount++;
+            }
+        });
+
+        if (importedCount > 0) {
+            // 將 Map 轉回陣列
+            history = Object.values(tempHistoryMap);
+            store.saveBodyHistory(history);
+            this.renderBodyHistory();
+            document.getElementById('smart-paste-input').value = '';
+            alert(`掃描完成！共處理 ${importedCount} 筆數據，並已更新至歷史紀錄。`);
+        } else {
+            alert('未偵測到有效數據，請確認貼上的內容是否包含正確的格式。');
+        }
     },
 
     // ─── MANAGE DB ───────────────────────────────────────────
