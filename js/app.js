@@ -948,26 +948,44 @@ const app = {
         if (fEl) fEl.value = s.fat || '';
         if (mEl) mEl.value = s.muscle || '';
         if (uEl) uEl.innerText = s.muscleUnit || 'kg';
+        const fuEl = document.getElementById('setting-fat-unit');
+        if (fuEl) fuEl.innerText = s.fatUnit || '%';
         if (dEl && !dEl.value) dEl.value = new Date().toISOString().split('T')[0];
 
         this.renderBodyHistory();
     },
 
-    toggleSettingMuscleUnit() {
-        const lbl = document.getElementById('setting-muscle-unit');
-        const input = document.getElementById('setting-muscle');
+    toggleBodyUnits() {
         const weightInput = document.getElementById('setting-weight');
         const weight = parseFloat(weightInput.value) || 0;
-        const val = parseFloat(input.value) || 0;
+        if (weight <= 0) { alert('請先輸入體重以進行換算'); return; }
 
-        if (lbl.innerText === 'kg') {
-            lbl.innerText = '%';
-            if (weight > 0) input.value = ((val / weight) * 100).toFixed(1);
+        const mUnitLbl = document.getElementById('setting-muscle-unit');
+        const fUnitLbl = document.getElementById('setting-fat-unit');
+        const mInput = document.getElementById('setting-muscle');
+        const fInput = document.getElementById('setting-fat');
+
+        const mVal = parseFloat(mInput.value) || 0;
+        const fVal = parseFloat(fInput.value) || 0;
+
+        // 獲取當前單位
+        const currentUnit = mUnitLbl.innerText; // 因為兩者同步，看一個就好
+
+        if (currentUnit === 'kg') {
+            // 從 kg 切換到 %
+            mUnitLbl.innerText = '%';
+            fUnitLbl.innerText = '%';
+            mInput.value = ((mVal / weight) * 100).toFixed(1);
+            fInput.value = ((fVal / weight) * 100).toFixed(1);
         } else {
-            lbl.innerText = 'kg';
-            if (weight > 0) input.value = (weight * (val / 100)).toFixed(1);
+            // 從 % 切換到 kg
+            mUnitLbl.innerText = 'kg';
+            fUnitLbl.innerText = 'kg';
+            mInput.value = (weight * (mVal / 100)).toFixed(1);
+            fInput.value = (weight * (fVal / 100)).toFixed(1);
         }
-        this.renderBodyHistory();
+        
+        this.renderBodyChart();
     },
 
     renderBodyHistory() {
@@ -981,28 +999,38 @@ const app = {
             return;
         }
 
-        const currentUnit = document.getElementById('setting-muscle-unit').innerText;
+        const currentMUnit = document.getElementById('setting-muscle-unit').innerText;
+        const currentFUnit = document.getElementById('setting-fat-unit').innerText;
+        
         const sorted = [...history].sort((a, b) => new Date(b.date) - new Date(a.date));
         list.innerHTML = sorted.map((h, idx) => {
+            // 處理肌肉量顯示
             let displayMuscle = h.muscle;
-            if (h.muscleUnit && h.muscleUnit !== currentUnit) {
-                if (currentUnit === '%') {
-                    displayMuscle = ((h.muscle / h.weight) * 100).toFixed(1);
-                } else {
-                    displayMuscle = (h.weight * (h.muscle / 100)).toFixed(1);
-                }
-            } else if (!h.muscleUnit && currentUnit === '%') {
+            if (h.muscleUnit && h.muscleUnit !== currentMUnit) {
+                if (currentMUnit === '%') displayMuscle = ((h.muscle / h.weight) * 100).toFixed(1);
+                else displayMuscle = (h.weight * (h.muscle / 100)).toFixed(1);
+            } else if (!h.muscleUnit && currentMUnit === '%') {
                 displayMuscle = ((h.muscle / h.weight) * 100).toFixed(1);
             }
+
+            // 處理體脂顯示
+            let displayFat = h.fat;
+            if (h.fatUnit && h.fatUnit !== currentFUnit) {
+                if (currentFUnit === 'kg') displayFat = (h.weight * (h.fat / 100)).toFixed(1);
+                else displayFat = ((h.fat / h.weight) * 100).toFixed(1);
+            } else if (!h.fatUnit && currentFUnit === 'kg') {
+                displayFat = (h.weight * (h.fat / 100)).toFixed(1);
+            }
+
             return `
                 <div class="glass-card" style="padding:12px; display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
                     <div>
                         <div style="font-size:12px; color:var(--primary); font-weight:bold; margin-bottom:4px;">${h.date}</div>
-                        <div style="font-size:14px; font-weight:800; color:#fff;">
-                            ${h.weight}kg / ${h.fat}% / ${displayMuscle}${currentUnit}
+                        <div style="font-size:15px; font-weight:900;">
+                            ${h.weight}kg / <span style="color:#f59e0b">${displayFat}${currentFUnit}</span> / <span style="color:#8b5cf6">${displayMuscle}${currentMUnit}</span>
                         </div>
                     </div>
-                    <span style="color:var(--danger); font-size:12px; cursor:pointer;" onclick="app.deleteBodyRecord(${idx})">刪除</span>
+                    <div style="color:var(--danger); font-size:12px; cursor:pointer; padding:10px;" onclick="app.deleteBodyRecord(${idx})">刪除</div>
                 </div>
             `;
         }).join('');
@@ -1023,21 +1051,29 @@ const app = {
         const sorted = [...history].sort((a, b) => new Date(a.date) - new Date(b.date)).slice(-10);
         const w = container.clientWidth || 200;
         const h = container.clientHeight || 150;
-        const padT = 25; 
+        const padT = 30; 
         const padB = 35; 
-        const padL = 35; 
-        const padR = 35; 
+        const padL = 40; 
+        const padR = 40; 
 
-        const currentUnit = document.getElementById('setting-muscle-unit').innerText;
+        const currentMUnit = document.getElementById('setting-muscle-unit').innerText;
+        const currentFUnit = document.getElementById('setting-fat-unit').innerText;
 
         const weights = sorted.map(d => d.weight);
-        const fats = sorted.map(d => d.fat || 0);
+        const fats = sorted.map(d => {
+            let val = d.fat || 0;
+            if (d.fatUnit && d.fatUnit !== currentFUnit) {
+                if (currentFUnit === 'kg') val = d.weight * (val / 100);
+                else val = (val / d.weight) * 100;
+            }
+            return val;
+        });
         const muscles = sorted.map(d => {
             let val = d.muscle || 0;
-            if (d.muscleUnit && d.muscleUnit !== currentUnit) {
-                if (currentUnit === '%') val = (val / d.weight) * 100;
+            if (d.muscleUnit && d.muscleUnit !== currentMUnit) {
+                if (currentMUnit === '%') val = (val / d.weight) * 100;
                 else val = d.weight * (val / 100);
-            } else if (!d.muscleUnit && currentUnit === '%') {
+            } else if (!d.muscleUnit && currentMUnit === '%') {
                 val = (val / d.weight) * 100;
             }
             return val;
@@ -1069,44 +1105,110 @@ const app = {
 
         container.innerHTML = `
             <svg width="100%" height="100%" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" style="overflow:visible">
-                <!-- 座標軸與網格線 -->
+                <!-- 網格線 -->
+                ${ticksL.map(v => `
+                    <line x1="${padL}" y1="${getY(v, rangeL)}" x2="${w - padR}" y2="${getY(v, rangeL)}" stroke="#222" stroke-width="0.5" stroke-dasharray="2,2" />
+                `).join('')}
+
                 <line x1="${padL}" y1="${h - padB}" x2="${w - padR}" y2="${h - padB}" stroke="#333" stroke-width="1" />
                 <line x1="${padL}" y1="${padT}" x2="${padL}" y2="${h - padB}" stroke="#333" stroke-width="1" />
                 
                 ${ticksL.map(v => `
-                    <line x1="${padL}" y1="${getY(v, rangeL)}" x2="${w - padR}" y2="${getY(v, rangeL)}" stroke="#333" stroke-width="0.5" stroke-dasharray="2,2" />
-                    <text x="${padL - 10}" y="${getY(v, rangeL)}" fill="#fff" font-size="12" font-weight="900" text-anchor="end" alignment-baseline="middle">${v.toFixed(1)}</text>
+                    <text x="${padL - 10}" y="${getY(v, rangeL)}" fill="#fff" font-size="11" font-weight="900" text-anchor="end" alignment-baseline="middle">${v.toFixed(1)}</text>
                 `).join('')}
                 
                 ${ticksR.map(v => `
-                    <text x="${w - padR + 10}" y="${getY(v, rangeR)}" fill="#fff" font-size="12" font-weight="900" text-anchor="start" alignment-baseline="middle">${v.toFixed(1)}</text>
+                    <text x="${w - padR + 10}" y="${getY(v, rangeR)}" fill="#fff" font-size="11" font-weight="900" text-anchor="start" alignment-baseline="middle">${v.toFixed(1)}</text>
                 `).join('')}
 
                 <!-- X 軸日期 -->
                 ${sorted.map((d, i) => {
-                    if (i === 0 || i === sorted.length - 1 || i === Math.floor(sorted.length / 2)) {
-                        const dateObj = new Date(d.date);
-                        return `<text x="${getX(i)}" y="${h - padB + 18}" fill="#888" font-size="9" text-anchor="middle">${dateObj.getMonth() + 1}/${dateObj.getDate()}</text>`;
-                    }
-                    return '';
+                    const dateObj = new Date(d.date);
+                    return `<text x="${getX(i)}" y="${h - padB + 18}" fill="#888" font-size="9" text-anchor="middle">${dateObj.getMonth() + 1}/${dateObj.getDate()}</text>`;
                 }).join('')}
 
-                <!-- 數據線 -->
                 <path d="${weightPath}" fill="none" stroke="var(--primary)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />
                 <path d="${fatPath}" fill="none" stroke="#f59e0b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="4,3" />
                 <path d="${musclePath}" fill="none" stroke="#8b5cf6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
                 
                 ${sorted.map((d, i) => `
-                    <circle cx="${getX(i)}" cy="${getY(weights[i], rangeL)}" r="3" fill="var(--primary)" stroke="#000" stroke-width="1" />
-                    <circle cx="${getX(i)}" cy="${getY(fats[i], rangeR)}" r="2" fill="#f59e0b" />
-                    <circle cx="${getX(i)}" cy="${getY(muscles[i], rangeR)}" r="2" fill="#8b5cf6" />
+                    <g class="chart-point">
+                        <circle cx="${getX(i)}" cy="${getY(weights[i], rangeL)}" r="3" fill="var(--primary)" stroke="#000" stroke-width="1"></circle>
+                        <circle cx="${getX(i)}" cy="${getY(fats[i], rangeR)}" r="2.5" fill="#f59e0b" stroke="#000" stroke-width="0.5"></circle>
+                        <circle cx="${getX(i)}" cy="${getY(muscles[i], rangeR)}" r="2.5" fill="#8b5cf6" stroke="#000" stroke-width="0.5"></circle>
+                    </g>
                 `).join('')}
 
                 <!-- 單位標示 -->
-                <text x="${padL}" y="${padT - 12}" fill="var(--primary)" font-size="11" font-weight="900">kg</text>
-                <text x="${w - padR}" y="${padT - 12}" fill="#f59e0b" font-size="11" font-weight="900" text-anchor="end">${currentUnit === '%' ? '%' : 'kg'}</text>
+                <rect x="${padL - 35}" y="${padT - 25}" width="30" height="15" rx="3" fill="#000" fill-opacity="0.5" />
+                <text x="${padL - 20}" y="${padT - 15}" fill="var(--primary)" font-size="10" font-weight="900" text-anchor="middle">kg</text>
+                
+                <rect x="${w - padR + 5}" y="${padT - 25}" width="30" height="15" rx="3" fill="#000" fill-opacity="0.5" />
+                <text x="${w - padR + 20}" y="${padT - 15}" fill="#f59e0b" font-size="10" font-weight="900" text-anchor="middle">${currentFUnit === 'kg' && currentMUnit === 'kg' ? 'kg' : (currentFUnit === '%' ? '%' : 'mix')}</text>
             </svg>
+            <div id="chart-tooltip" class="chart-tooltip" style="display:none;"></div>
         `;
+
+        // 互動事件處理 (Tooltip)
+        const svg = container.querySelector('svg');
+        const tooltip = document.getElementById('chart-tooltip');
+        
+        const handleMove = (e) => {
+            const rect = svg.getBoundingClientRect();
+            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+            const x = ((clientX - rect.left) / rect.width) * w;
+            
+            let closestIdx = 0;
+            let minDist = Infinity;
+            sorted.forEach((_, i) => {
+                const dist = Math.abs(getX(i) - x);
+                if (dist < minDist) {
+                    minDist = dist;
+                    closestIdx = i;
+                }
+            });
+
+            const d = sorted[closestIdx];
+            const tx = getX(closestIdx);
+            
+            tooltip.innerHTML = `
+                <div class="tooltip-date">${d.date}</div>
+                <div class="tooltip-row">
+                    <div class="tooltip-label"><div class="tooltip-dot" style="background:var(--primary)"></div>體重</div>
+                    <div class="tooltip-value">${weights[closestIdx].toFixed(1)} kg</div>
+                </div>
+                <div class="tooltip-row">
+                    <div class="tooltip-label"><div class="tooltip-dot" style="background:#f59e0b"></div>體脂</div>
+                    <div class="tooltip-value">${fats[closestIdx].toFixed(1)} ${currentFUnit}</div>
+                </div>
+                <div class="tooltip-row">
+                    <div class="tooltip-label"><div class="tooltip-dot" style="background:#8b5cf6"></div>肌肉</div>
+                    <div class="tooltip-value">${muscles[closestIdx].toFixed(1)} ${currentMUnit}</div>
+                </div>
+            `;
+            
+            tooltip.style.display = 'block';
+            const tooltipRect = tooltip.getBoundingClientRect();
+            let leftPos = (tx / w) * rect.width;
+            
+            // 決定顯示在左還是右
+            if (leftPos + tooltipRect.width + 20 > rect.width) {
+                tooltip.style.left = 'auto';
+                tooltip.style.right = (rect.width - leftPos + 10) + 'px';
+            } else {
+                tooltip.style.left = (leftPos + 10) + 'px';
+                tooltip.style.right = 'auto';
+            }
+            tooltip.style.top = '10px';
+        };
+
+        svg.addEventListener('mousemove', handleMove);
+        svg.addEventListener('touchstart', (e) => {
+            handleMove(e);
+        }, {passive: false});
+        
+        svg.addEventListener('mouseleave', () => tooltip.style.display = 'none');
+        svg.addEventListener('touchend', () => tooltip.style.display = 'none');
     },
 
     deleteBodyRecord(index) {
@@ -1152,8 +1254,9 @@ const app = {
         const fat = parseFloat(document.getElementById('setting-fat').value) || 0;
         const muscle = parseFloat(document.getElementById('setting-muscle').value) || 0;
         const muscleUnit = document.getElementById('setting-muscle-unit').innerText;
+        const fatUnit = document.getElementById('setting-fat-unit').innerText;
 
-        const newSettings = { weight, height, fat, muscle, muscleUnit };
+        const newSettings = { weight, height, fat, muscle, muscleUnit, fatUnit };
         store.saveSettings(newSettings);
 
         const dateStr = document.getElementById('setting-date').value || new Date().toISOString().split('T')[0];
@@ -1162,10 +1265,11 @@ const app = {
             const history = store.getBodyHistory();
             // 檢查該日期是否已有紀錄，有的話更新，沒有的話新增
             const existingIdx = history.findIndex(h => h.date === dateStr);
+            const record = { date: dateStr, weight, fat, muscle, muscleUnit, fatUnit };
             if (existingIdx !== -1) {
-                history[existingIdx] = { date: dateStr, weight, fat, muscle, muscleUnit };
+                history[existingIdx] = record;
             } else {
-                history.push({ date: dateStr, weight, fat, muscle, muscleUnit });
+                history.push(record);
             }
             store.saveBodyHistory(history);
         }

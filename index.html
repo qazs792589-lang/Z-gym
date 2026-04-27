@@ -261,15 +261,14 @@
                     </div>
                     <div style="display:flex;gap:16px;margin-top:16px">
                         <div class="flex-1">
-                            <span style="font-size:12px;color:#888;">體脂 (%)</span>
+                            <span style="font-size:12px;color:#888;">體脂 (<span id="setting-fat-unit">%</span>)</span>
                             <input type="number" id="setting-fat" class="custom-input" step="0.1">
                         </div>
                         <div class="flex-1">
                             <div style="display:flex; justify-content:space-between; align-items:center;">
-                                <span style="font-size:12px;color:#888;">肌肉量 (<span
-                                        id="setting-muscle-unit">kg</span>)</span>
+                                <span style="font-size:12px;color:#888;">肌肉量 (<span id="setting-muscle-unit">kg</span>)</span>
                                 <span style="font-size:10px; color:var(--primary); cursor:pointer; font-weight:bold;"
-                                    onclick="app.toggleSettingMuscleUnit()">切換</span>
+                                    onclick="app.toggleBodyUnits()">切換單位</span>
                             </div>
                             <input type="number" id="setting-muscle" class="custom-input" step="0.1">
                         </div>
@@ -298,7 +297,9 @@
                                     肌肉
                                 </div>
                             </div>
-                            <div id="body-chart-svg" style="flex:1; min-height: 0;"></div>
+                            <div id="body-chart-svg" style="flex:1; min-height: 0; position: relative;">
+                                <div id="chart-tooltip" class="chart-tooltip" style="display:none;"></div>
+                            </div>
                         </div>
                         <div id="body-history-list" class="custom-scrollbar body-list-card">
                             <!-- Items by JS -->
