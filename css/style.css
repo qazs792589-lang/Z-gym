@@ -1256,7 +1256,8 @@ body {
     font-size: 20px;
     font-weight: 900;
     text-align: center;
-    width: 220px;
+    width: 100%;
+    max-width: 240px;
     outline: none;
     cursor: pointer;
     font-family: inherit;
@@ -1273,6 +1274,10 @@ input[type="date"]::-webkit-clear-button {
 
 input[type="date"]::-webkit-inner-spin-button {
     display: none;
+}
+
+input[type="date"]::-webkit-date-and-time-value {
+    text-align: center;
 }
 
 .date-input-header::-webkit-calendar-picker-indicator {
@@ -1437,6 +1442,21 @@ input[type="date"]::-webkit-inner-spin-button {
     .body-chart-card {
         height: 300px;
     }
+}
+
+.workout-log-set {
+    cursor: pointer;
+    padding: 2px 4px;
+    margin: 0 -2px;
+    border-radius: 4px;
+    transition: all 0.2s;
+    display: inline-block;
+}
+
+.workout-log-set:active {
+    background: rgba(163, 230, 53, 0.3);
+    color: var(--primary);
+    transform: scale(1.1);
 }
 
 

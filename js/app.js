@@ -424,7 +424,7 @@ const app = {
             const u1 = firstSet.u1 || (isCardio ? '秒' : 'kg');
             const repsStr = groupSets.map(s => {
                 const u2 = s.u2 || (isCardio ? '秒' : '下');
-                return `${s.reps}${u2}`;
+                return `<span class="workout-log-set" onclick="app.deleteSet('${act.exId}', '${s.id}')">${s.reps}${u2}</span>`;
             }).join(' · ');
             return `<div style="display:flex; gap:10px; font-size:13px; margin-bottom:4px;">
                 <span style="color:var(--primary); font-weight:800; min-width:60px;">${firstSet.kg}${u1}</span>
@@ -494,7 +494,7 @@ const app = {
     },
 
     deleteSet(exId, setId) {
-        if (!confirm('刪除此組紀錄？長按為刪除')) return;
+        if (!confirm('刪除此組紀錄？')) return;
         let record = store.getDayRecord(this.state.viewDate);
         const act = record.activities.find(a => a.exId === exId);
         if (act) {
@@ -502,6 +502,12 @@ const app = {
             if (act.sets.length === 0) record.activities = record.activities.filter(a => a.exId !== exId);
             store.saveDayRecord(this.state.viewDate, record);
             this.renderRecordView();
+
+            // 如果當前正在編輯這個動作，也要同步更新子視圖的顯示
+            if (this.state.currentEx && this.state.currentEx.id === exId) {
+                const updatedAct = record.activities.find(a => a.exId === exId);
+                this.renderWorkoutLog(updatedAct);
+            }
         }
     },
 
