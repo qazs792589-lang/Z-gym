@@ -1052,7 +1052,8 @@ const app = {
         const currentMUnit = document.getElementById('setting-muscle-unit').innerText;
         const currentFUnit = document.getElementById('setting-fat-unit').innerText;
 
-        // 動態壓縮與平滑處理 (Downsampling to max 15 points)
+        // 動態壓縮 (Downsampling to max 15 points)
+        // 確保圖表點與滑鼠懸停顯示的都是真正的單日真實數據，不使用平均值
         if (sorted.length > 15) {
             const downsampled = [];
             const bucketSize = sorted.length / 15;
@@ -1061,35 +1062,8 @@ const app = {
                 const end = Math.floor((i + 1) * bucketSize);
                 const bucket = sorted.slice(start, end);
                 if (bucket.length > 0) {
-                    // 為了計算平均值，先將該桶內的數據單位統一
-                    const normalized = bucket.map(d => {
-                        let f = d.fat || 0;
-                        if (d.fatUnit && d.fatUnit !== currentFUnit) {
-                            f = currentFUnit === 'kg' ? d.weight * (f / 100) : (f / d.weight) * 100;
-                        }
-                        let m = d.muscle || 0;
-                        if (d.muscleUnit && d.muscleUnit !== currentMUnit) {
-                            m = currentMUnit === '%' ? (m / d.weight) * 100 : d.weight * (m / 100);
-                        } else if (!d.muscleUnit && currentMUnit === '%') {
-                            m = (m / d.weight) * 100;
-                        }
-                        return { weight: d.weight, fat: f, muscle: m };
-                    });
-
-                    const avgW = normalized.reduce((s, v) => s + v.weight, 0) / bucket.length;
-                    const avgF = normalized.reduce((s, v) => s + v.fat, 0) / bucket.length;
-                    const avgM = normalized.reduce((s, v) => s + v.muscle, 0) / bucket.length;
-                    const midIdx = Math.floor(bucket.length / 2);
-                    
-                    downsampled.push({
-                        date: bucket[midIdx].date,
-                        weight: avgW,
-                        fat: avgF,
-                        muscle: avgM,
-                        fatUnit: currentFUnit,
-                        muscleUnit: currentMUnit,
-                        isAveraged: bucket.length > 1
-                    });
+                    // 直接取該區間的最後一筆真實數據
+                    downsampled.push(bucket[bucket.length - 1]);
                 }
             }
             sorted = downsampled;
@@ -1099,12 +1073,11 @@ const app = {
         const h = container.clientHeight || 150;
         const padT = 30; 
         const padB = 35; 
-        const padL = 40; 
-        const padR = 40; 
+        const padL = 35; 
+        const padR = 35; 
 
         const weights = sorted.map(d => d.weight);
         const fats = sorted.map(d => {
-            if (d.isAveraged) return d.fat; // 已經是平滑後的數據
             let val = d.fat || 0;
             if (d.fatUnit && d.fatUnit !== currentFUnit) {
                 if (currentFUnit === 'kg') val = d.weight * (val / 100);
@@ -1113,7 +1086,6 @@ const app = {
             return val;
         });
         const muscles = sorted.map(d => {
-            if (d.isAveraged) return d.muscle; // 已經是平滑後的數據
             let val = d.muscle || 0;
             if (d.muscleUnit && d.muscleUnit !== currentMUnit) {
                 if (currentMUnit === '%') val = (val / d.weight) * 100;
@@ -1159,13 +1131,14 @@ const app = {
 
                 <line x1="${padL}" y1="${h - padB}" x2="${w - padR}" y2="${h - padB}" stroke="#333" stroke-width="1" />
                 <line x1="${padL}" y1="${padT}" x2="${padL}" y2="${h - padB}" stroke="#333" stroke-width="1" />
+                <line x1="${w - padR}" y1="${padT}" x2="${w - padR}" y2="${h - padB}" stroke="#333" stroke-width="1" />
                 
                 ${ticksL.map(v => `
-                    <text x="${padL - 10}" y="${getY(v, rangeL)}" fill="#fff" font-size="11" font-weight="900" text-anchor="end" alignment-baseline="middle">${v.toFixed(1)}</text>
+                    <text x="5" y="${getY(v, rangeL)}" fill="#fff" font-size="10" font-weight="900" text-anchor="start" alignment-baseline="middle">${v.toFixed(1)}</text>
                 `).join('')}
                 
                 ${ticksR.map(v => `
-                    <text x="${w - padR + 10}" y="${getY(v, rangeR)}" fill="#fff" font-size="11" font-weight="900" text-anchor="start" alignment-baseline="middle">${v.toFixed(1)}</text>
+                    <text x="${w - 5}" y="${getY(v, rangeR)}" fill="#fff" font-size="10" font-weight="900" text-anchor="end" alignment-baseline="middle">${v.toFixed(1)}</text>
                 `).join('')}
 
                 <!-- X 軸日期 (數據點多於 10 個時，每隔一個顯示以防重疊) -->
@@ -1188,11 +1161,11 @@ const app = {
                 `).join('')}
 
                 <!-- 單位標示 -->
-                <rect x="${padL - 35}" y="${padT - 25}" width="30" height="15" rx="3" fill="#000" fill-opacity="0.5" />
-                <text x="${padL - 20}" y="${padT - 15}" fill="var(--primary)" font-size="10" font-weight="900" text-anchor="middle">kg</text>
+                <rect x="5" y="${padT - 25}" width="24" height="15" rx="3" fill="#000" fill-opacity="0.5" />
+                <text x="17" y="${padT - 15}" fill="var(--primary)" font-size="10" font-weight="900" text-anchor="middle">kg</text>
                 
-                <rect x="${w - padR + 5}" y="${padT - 25}" width="30" height="15" rx="3" fill="#000" fill-opacity="0.5" />
-                <text x="${w - padR + 20}" y="${padT - 15}" fill="#f59e0b" font-size="10" font-weight="900" text-anchor="middle">${currentFUnit === 'kg' && currentMUnit === 'kg' ? 'kg' : (currentFUnit === '%' ? '%' : 'mix')}</text>
+                <rect x="${w - 29}" y="${padT - 25}" width="24" height="15" rx="3" fill="#000" fill-opacity="0.5" />
+                <text x="${w - 17}" y="${padT - 15}" fill="#f59e0b" font-size="10" font-weight="900" text-anchor="middle">${currentFUnit === 'kg' && currentMUnit === 'kg' ? 'kg' : (currentFUnit === '%' ? '%' : 'mix')}</text>
             </svg>
             <div id="chart-tooltip" class="chart-tooltip" style="display:none;"></div>
         `;

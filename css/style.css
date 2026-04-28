@@ -1360,14 +1360,18 @@ input[type="date"]::-webkit-inner-spin-button {
     flex-direction: column;
     gap: 16px;
     margin-top: 12px;
+    margin-left: -20px;
+    margin-right: -20px;
+    width: calc(100% + 40px);
 }
 
 .body-chart-card {
     width: 100%;
     background: rgba(255, 255, 255, 0.03);
-    border-radius: 12px;
-    padding: 16px;
-    height: 320px;
+    border-top: 1px solid var(--border-color);
+    border-bottom: 1px solid var(--border-color);
+    padding: 16px 0;
+    height: 400px;
     display: flex;
     flex-direction: column;
 }
@@ -1377,6 +1381,7 @@ input[type="date"]::-webkit-inner-spin-button {
     display: flex;
     flex-direction: column;
     gap: 8px;
+    padding: 0 20px;
 }
 .chart-tooltip {
     position: absolute;
@@ -1430,7 +1435,7 @@ input[type="date"]::-webkit-inner-spin-button {
 
 @media (max-width: 768px) {
     .body-chart-card {
-        height: 250px;
+        height: 300px;
     }
 }
 
