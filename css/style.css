@@ -129,7 +129,7 @@ body {
     flex-direction: column;
     background: var(--bg-dark);
     overflow: visible;
-    padding-top: calc(env(safe-area-inset-top, 10px) + 90px);
+    padding-top: calc(env(safe-area-inset-top, 0px) + 65px);
     padding-bottom: 120px;
 }
 
