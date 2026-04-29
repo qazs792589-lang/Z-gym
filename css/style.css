@@ -34,7 +34,7 @@ body {
 
 /* Header */
 #main-header {
-    padding: env(safe-area-inset-top, 20px) 20px 10px;
+    padding: env(safe-area-inset-top, 10px) 20px 0px;
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -129,7 +129,7 @@ body {
     flex-direction: column;
     background: var(--bg-dark);
     overflow: visible;
-    padding-top: calc(env(safe-area-inset-top, 20px) + 70px);
+    padding-top: calc(env(safe-area-inset-top, 10px) + 90px);
     padding-bottom: 120px;
 }
 
