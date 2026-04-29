@@ -73,35 +73,35 @@
 
                         <!-- Check-in + Duration Row -->
                         <div
-                            style="display:flex; justify-content:space-between; align-items:center; gap:10px; border-top: 1px solid var(--border-color); padding-top: 16px;">
+                            style="display:flex; align-items:flex-end; gap:8px; border-top: 1px solid var(--border-color); padding-top: 16px;">
                             <!-- Duration -->
                             <div style="display:flex; flex-direction:column; gap:4px; cursor:pointer;"
                                 onclick="app.openTimePicker()">
                                 <label
-                                    style="margin-bottom:0; cursor:pointer; color:var(--text-sub); font-size:12px; font-weight:600;">紀錄時長(分)</label>
+                                    style="margin-bottom:0; cursor:pointer; color:var(--text-sub); font-size:12px; font-weight:600; white-space:nowrap;">紀錄時長</label>
                                 <div
-                                    style="background:rgba(163,230,53,0.1); border:1px solid var(--primary); padding:6px 12px; border-radius:10px; font-weight:800; color:var(--primary); font-size:16px; text-align:center; min-width:60px;">
+                                    style="background:rgba(163,230,53,0.1); border:1.5px solid var(--primary); padding:8px 12px; border-radius:10px; font-weight:800; color:var(--primary); font-size:16px; text-align:center; min-width:65px;">
                                     <span id="lbl-duration">60</span>
                                 </div>
                             </div>
 
-                            <!-- Punch In/Out -->
-                            <div style="flex:1; display:flex; gap:8px; justify-content:flex-end;">
-                                <div style="display:flex; flex-direction:column; gap:4px;">
-                                    <label style="color:var(--text-sub); font-size:12px; font-weight:600;">開始</label>
-                                    <div style="display:flex; gap:4px;">
-                                        <div id="display-start-time" class="time-display-btn"
-                                            onclick="app.openTimePickerCustom('start')">00:00</div>
-                                        <button class="punch-btn" onclick="app.punchNow('start')">Now</button>
-                                    </div>
+                            <!-- Start Time -->
+                            <div style="flex:1; display:flex; flex-direction:column; gap:4px;">
+                                <label style="color:var(--text-sub); font-size:12px; font-weight:600;">開始</label>
+                                <div style="display:flex; gap:4px;">
+                                    <div id="display-start-time" class="time-display-btn" style="flex:1; min-width:0;"
+                                        onclick="app.openTimePickerCustom('start')">00:00</div>
+                                    <button class="punch-btn" onclick="app.punchNow('start')">Now</button>
                                 </div>
-                                <div style="display:flex; flex-direction:column; gap:4px;">
-                                    <label style="color:var(--text-sub); font-size:12px; font-weight:600;">結束</label>
-                                    <div style="display:flex; gap:4px;">
-                                        <div id="display-end-time" class="time-display-btn"
-                                            onclick="app.openTimePickerCustom('end')">00:00</div>
-                                        <button class="punch-btn" onclick="app.punchNow('end')">Now</button>
-                                    </div>
+                            </div>
+
+                            <!-- End Time -->
+                            <div style="flex:1; display:flex; flex-direction:column; gap:4px;">
+                                <label style="color:var(--text-sub); font-size:12px; font-weight:600;">結束</label>
+                                <div style="display:flex; gap:4px;">
+                                    <div id="display-end-time" class="time-display-btn" style="flex:1; min-width:0;"
+                                        onclick="app.openTimePickerCustom('end')">00:00</div>
+                                    <button class="punch-btn" onclick="app.punchNow('end')">Now</button>
                                 </div>
                             </div>
                         </div>
