@@ -16,8 +16,8 @@
     <div id="app">
         <!-- Header -->
         <header id="main-header">
-            <img src="./img/Gemini_Generated_Image_8g3jmq8g3jmq8g3j.png" alt="Logo"
-                style="height: 60px; width: auto; object-fit: contain;">
+            <img src="./img/S__30883846.jpg" alt="Logo"
+                style="height: 65px; width: auto; object-fit: contain;">
             <span class="version-badge">v2.1</span>
         </header>
 
@@ -245,16 +245,20 @@
                 <hr class="divider">
                 <div class="glass-card" style="padding:15px; margin-top:10px;">
                     <div style="margin-bottom:16px;">
-                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                        <div
+                            style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
                             <span style="font-size:12px;color:#888;">智慧貼上內容 (OMRON/CSV)</span>
-                            <button class="btn-outline-green" style="padding:4px 12px; font-size:12px;" onclick="app.smartImport()">確定</button>
+                            <button class="btn-outline-green" style="padding:4px 12px; font-size:12px;"
+                                onclick="app.smartImport()">確定</button>
                         </div>
-                        <textarea id="smart-paste-input" class="summary-textarea" style="height:80px; margin-top:8px; font-size:11px; font-family: monospace; min-height: 80px;" 
+                        <textarea id="smart-paste-input" class="summary-textarea"
+                            style="height:80px; margin-top:8px; font-size:11px; font-family: monospace; min-height: 80px;"
                             placeholder="在此貼上數據內容..."></textarea>
                     </div>
                     <div style="margin-bottom:12px;">
                         <span style="font-size:12px;color:#888;">紀錄日期</span>
-                        <input type="date" id="setting-date" class="custom-input" style="width:100%; margin-top:4px; text-align: center;">
+                        <input type="date" id="setting-date" class="custom-input"
+                            style="width:100%; margin-top:4px; text-align: center;">
                     </div>
                     <div style="display:flex; gap:12px; margin-bottom:12px;">
                         <div class="flex-1">
@@ -273,7 +277,8 @@
                         </div>
                         <div class="flex-1">
                             <div style="display:flex; justify-content:space-between; align-items:center;">
-                                <span style="font-size:12px;color:#888;">肌肉量 (<span id="setting-muscle-unit">kg</span>)</span>
+                                <span style="font-size:12px;color:#888;">肌肉量 (<span
+                                        id="setting-muscle-unit">kg</span>)</span>
                                 <span style="font-size:10px; color:var(--primary); cursor:pointer; font-weight:bold;"
                                     onclick="app.toggleBodyUnits()">切換單位</span>
                             </div>
