@@ -439,14 +439,30 @@ const app = {
         let kg, reps;
         let u1, u2;
 
+        const kgRaw = isCardio ? this.state.trainValue : document.getElementById('input-kg').value;
+        kg = parseFloat(kgRaw);
+
+        // 如果點擊「結束動作」且數值為 0 或空白，直接視為取消並關閉
+        if (isFinished && (kgRaw === '' || isNaN(kg) || kg <= 0)) {
+            const note = document.getElementById('workout-notes').value.trim();
+            if (note) {
+                let record = store.getDayRecord(this.state.viewDate);
+                let act = record.activities.find(a => a.exId === this.state.currentEx.id);
+                if (act) {
+                    act.note = note;
+                    store.saveDayRecord(this.state.viewDate, record);
+                }
+            }
+            this.closeSubView();
+            return;
+        }
+
         if (isCardio) {
             kg = this.state.trainValue;
             reps = this.state.repsValue;
             u1 = this.state.trainUnit;
             u2 = this.state.restUnit;
         } else {
-            const kgRaw = document.getElementById('input-kg').value;
-            kg = parseFloat(kgRaw);
             if (kgRaw === '' || isNaN(kg) || kg < 0) {
                 const input = document.getElementById('input-kg');
                 input.style.color = '#ef4444';
