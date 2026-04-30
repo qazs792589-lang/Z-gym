@@ -1344,10 +1344,11 @@ const app = {
         let importedCount = 0;
         let history = store.getBodyHistory();
         
-        // 用一個物件來暫存處理過的日期，避免同一天重複匯入多次（以最後一筆為準）
         const tempHistoryMap = {};
-        // 先將現有歷史存入 Map
-        history.forEach(h => tempHistoryMap[h.date] = h);
+        // 先將現有歷史存入 Map，以日期為 key
+        history.forEach(h => {
+            if (h.date) tempHistoryMap[h.date] = h;
+        });
 
         lines.forEach(line => {
             if (!line.trim()) return;
@@ -1357,15 +1358,22 @@ const app = {
             // 跳過表頭或無效列 (歐姆龍格式第 0 欄是日期，第 2 欄是體重，第 3 欄是體脂，第 8 欄是肌肉量)
             if (cols.length < 9 || cols[0].includes('測量日期')) return;
 
-            // 轉換日期格式： "2026/01/06 12:19" -> "2026-01-06"
+            // 轉換日期格式，確保補零： "2026/1/6 12:19" -> "2026-01-06"
             const datePart = cols[0].split(' ')[0];
-            const dateRaw = datePart.replace(/\//g, '-'); 
+            const dObj = new Date(datePart.replace(/\//g, '-'));
+            if (isNaN(dObj.getTime())) return;
+
+            const y = dObj.getFullYear();
+            const m = String(dObj.getMonth() + 1).padStart(2, '0');
+            const d = String(dObj.getDate()).padStart(2, '0');
+            const dateRaw = `${y}-${m}-${d}`;
             
             const weight = parseFloat(cols[2]);
             const fat = parseFloat(cols[3]);
             const muscle = parseFloat(cols[8]);
 
-            if (!isNaN(weight) && dateRaw.match(/^\d{4}-\d{2}-\d{2}$/)) {
+            if (!isNaN(weight)) {
+                // 直接覆蓋該日期的舊資料
                 tempHistoryMap[dateRaw] = {
                     date: dateRaw,
                     weight: weight,
@@ -1379,14 +1387,14 @@ const app = {
         });
 
         if (importedCount > 0) {
-            // 將 Map 轉回陣列
-            history = Object.values(tempHistoryMap);
+            // 將 Map 轉回陣列並按日期排序
+            history = Object.values(tempHistoryMap).sort((a, b) => new Date(a.date) - new Date(b.date));
             store.saveBodyHistory(history);
             this.renderBodyHistory();
             document.getElementById('smart-paste-input').value = '';
-            alert(`掃描完成！共處理 ${importedCount} 筆數據，並已更新至歷史紀錄。`);
+            alert(`掃描完成！共處理 ${importedCount} 筆數據，重複日期的資料已成功覆蓋更新。`);
         } else {
-            alert('未偵測到有效數據，請確認貼上的內容是否包含正確的格式。');
+            alert('未偵測到有效數據，請確認貼上的內容格式是否正確。');
         }
     },
 
@@ -1573,28 +1581,65 @@ const app = {
             const lines = content.split(/\r?\n/).filter(l => l.trim() !== '');
             if (lines.length <= 1) { alert('CSV 檔案無效或無資料'); return; }
             if (!confirm('匯入將會合併現有資料（若日期重複將會新增組數），確定嗎？')) return;
+
             const dayMap = {};
+            // 輔助函數：解析 YYYY-M-D 或 YYYY/M/D 為正確的 Date 物件
+            const parseDateStr = (str) => {
+                const parts = str.split(/[-/]/);
+                if (parts.length < 3) return null;
+                const y = parseInt(parts[0]), m = parseInt(parts[1]), d = parseInt(parts[2]);
+                const dt = new Date(y, m - 1, d);
+                return isNaN(dt.getTime()) ? null : dt;
+            };
+
             for (let i = 1; i < lines.length; i++) {
-                const cols = lines[i].split(',');
+                const cols = lines[i].split(',').map(c => c.trim().replace(/^"|"$/g, ''));
                 if (cols.length < 7) continue;
-                const date = cols[0];
-                if (!dayMap[date]) {
-                    const existing = store.getDayRecord(new Date(date));
-                    dayMap[date] = existing.activities.length > 0 ? existing : store.emptyRecord();
-                    dayMap[date].feeling = cols[1] || dayMap[date].feeling;
-                    dayMap[date].duration = parseInt(cols[2]) || dayMap[date].duration;
-                    dayMap[date].notes = cols[3] || dayMap[date].notes;
-                    dayMap[date].types = cols[4] ? cols[4].split('、') : dayMap[date].types;
+                
+                const dateStr = cols[0];
+                const dt = parseDateStr(dateStr);
+                if (!dt) continue;
+                
+                const dateKey = dateStr; // 暫存 key
+                if (!dayMap[dateKey]) {
+                    const existing = store.getDayRecord(dt);
+                    dayMap[dateKey] = {
+                        dt: dt,
+                        data: existing.activities.length > 0 ? existing : store.emptyRecord()
+                    };
+                    // 只有當 CSV 有值時才覆蓋基礎資訊
+                    if (cols[1]) dayMap[dateKey].data.feeling = cols[1];
+                    if (cols[2]) dayMap[dateKey].data.duration = parseInt(cols[2]);
+                    if (cols[3]) dayMap[dateKey].data.notes = cols[3];
+                    if (cols[4]) dayMap[dateKey].data.types = [...new Set([...dayMap[dateKey].data.types, ...cols[4].split('、')])];
                 }
+
                 const catName = cols[5], exName = cols[6], kg = cols[7], u1 = cols[8], reps = cols[9], u2 = cols[10], sNote = cols[11];
-                let act = dayMap[date].activities.find(a => a.catName === catName && a.exName === exName);
+                if (!catName || !exName) continue;
+
+                let act = dayMap[dateKey].data.activities.find(a => a.catName === catName && a.exName === exName);
                 if (!act) {
                     act = { exId: 'e' + Date.now() + Math.random(), exName, catName, sets: [] };
-                    dayMap[date].activities.push(act);
+                    dayMap[dateKey].data.activities.push(act);
                 }
-                act.sets.push({ id: 's' + Date.now() + Math.random(), kg: parseFloat(kg) || 0, reps: parseFloat(reps) || 0, u1, u2, note: sNote || '' });
+                
+                // 檢查是否已存在完全相同的組數以減少重複（簡單過濾）
+                const isDuplicate = act.sets.some(s => s.kg == kg && s.reps == reps && s.note == (sNote || ''));
+                if (!isDuplicate) {
+                    act.sets.push({ 
+                        id: 's' + Date.now() + Math.random(), 
+                        kg: parseFloat(kg) || 0, 
+                        reps: parseFloat(reps) || 0, 
+                        u1: u1 || 'kg', 
+                        u2: u2 || '下', 
+                        note: sNote || '' 
+                    });
+                }
             }
-            for (const date in dayMap) store.saveDayRecord(new Date(date), dayMap[date]);
+
+            for (const key in dayMap) {
+                store.saveDayRecord(dayMap[key].dt, dayMap[key].data);
+            }
             alert('匯入完成！');
             location.reload();
         };
