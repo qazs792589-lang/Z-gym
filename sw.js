@@ -1,4 +1,4 @@
-const CACHE_NAME = 'fitlog-v6';
+const CACHE_NAME = 'fitlog-v8';
 const ASSETS = [
     './',
     './index.html',
