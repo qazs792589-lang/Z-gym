@@ -1,4 +1,4 @@
-const CACHE_NAME = 'fitlog-v11';
+const CACHE_NAME = 'fitlog-v12';
 const ASSETS = [
     './',
     './index.html',
@@ -6,6 +6,7 @@ const ASSETS = [
     './js/app.js',
     './js/store.js',
     './manifest.json',
+    './img/S__30900256_0.png',
     './img/S__30900257_0.png'
 ];
 
