@@ -972,6 +972,7 @@ const app = {
                     totalVol += vol;
                     const summaryLine = isCardio ? `• ${a.exName}: ${a.sets.length}組\n` : `• ${a.exName}: ${a.sets.length}組 / 容量${vol}kg\n`;
                     text += summaryLine;
+                    if (a.note) text += `   備註: ${a.note}\n`;
                     a.sets.forEach((s, i) => {
                         const setDetail = isCardio ? `${s.kg}秒訓練 / ${s.reps}秒休息` : `${s.kg}kg × ${s.reps}下`;
                         text += `   ${i + 1}. ${setDetail}${s.note ? ` (${s.note})` : ''}\n`;
@@ -1515,7 +1516,7 @@ const app = {
         const keys = store.getAllDayKeys().sort();
         if (keys.length === 0) { alert('尚無資料可匯出'); return; }
         let csv = '\uFEFF';
-        csv += '日期,心情,時長(分),當日備註,訓練類型,部位,動作,重量/訓練時間,重量單位,次數/休息時間,次數單位,組備註\n';
+        csv += '日期,心情,時長(分),當日備註,訓練類型,部位,動作,動作備註,重量/訓練時間,重量單位,次數/休息時間,次數單位,組備註\n';
         keys.forEach(k => {
             const dateStr = k.replace('fitlog_v2_day_', '');
             const record = JSON.parse(localStorage.getItem(k));
@@ -1524,7 +1525,7 @@ const app = {
             const typeStr = (record.types || []).join('、');
             record.activities.forEach(act => {
                 act.sets.forEach(s => {
-                    const row = [...baseInfo, typeStr, act.catName, act.exName, s.kg, s.u1 || (act.catName === '有氧' ? '秒' : 'kg'), s.reps, s.u2 || (act.catName === '有氧' ? '秒' : '下'), (s.note || '').replace(/,/g, '，')];
+                    const row = [...baseInfo, typeStr, act.catName, act.exName, (act.note || '').replace(/,/g, '，'), s.kg, s.u1 || (act.catName === '有氧' ? '秒' : 'kg'), s.reps, s.u2 || (act.catName === '有氧' ? '秒' : '下'), (s.note || '').replace(/,/g, '，')];
                     csv += row.join(',') + '\n';
                 });
             });
