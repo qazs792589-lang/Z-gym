@@ -13,7 +13,8 @@ const app = {
         repsScrollTimeout: null,
         trainScrollTimeout: null,
         detailDate: null,
-        editingActivityNote: null // 用於追蹤是從哪個特定備註區塊進來編輯的
+        editingActivityNote: null, // 用於追蹤是從哪個特定備註區塊進來編輯的
+        currentPhoto: null
     },
 
     init() {
@@ -53,6 +54,7 @@ const app = {
     closeSubView() {
         document.querySelectorAll('.sub-view').forEach(v => v.classList.remove('active'));
         this.state.editingActivityNote = null;
+        this.state.currentPhoto = null;
         this.renderRecordView();
     },
 
@@ -221,9 +223,13 @@ const app = {
                 </div>`;
             }).join('');
 
-            const notesHtml = (act.note && act.note.trim() !== '') ?
+            const photoHtml = act.photo ?
+                `<img src="${act.photo}" class="photo-preview-thumbnail" style="margin-top:8px;" onclick="app.viewPhotoFull('${act.photo}')">` : '';
+
+            const notesHtml = ((act.note && act.note.trim() !== '') || act.photo) ?
                 `<div style="margin-top:10px; padding-top:8px; border-top:1px solid rgba(255,255,255,0.05); font-size:12px; color:var(--text-sub); display:flex; flex-direction:column; gap:4px;">
-                    <div>📝 ${act.note.trim()}</div>
+                    ${act.note && act.note.trim() !== '' ? `<div>📝 ${act.note.trim()}</div>` : ''}
+                    ${photoHtml}
                 </div>` : '';
 
             return `
@@ -382,6 +388,15 @@ const app = {
         // Reset inputs
         document.getElementById('input-kg').value = '';
         document.getElementById('workout-notes').value = (act && act.note) ? act.note : '';
+        
+        // Photo sync
+        this.state.currentPhoto = (act && act.photo) ? act.photo : null;
+        if (this.state.currentPhoto) {
+            document.getElementById('photo-preview').src = this.state.currentPhoto;
+            document.getElementById('photo-preview-container').style.display = 'block';
+        } else {
+            document.getElementById('photo-preview-container').style.display = 'none';
+        }
 
         // Render today's log
         this.renderWorkoutLog(act);
@@ -483,20 +498,21 @@ const app = {
             u2 = '下';
         }
         let record = store.getDayRecord(this.state.viewDate);
-        
+
         let act;
         if (this.state.editingActivityNote !== null) {
             // 【編輯模式】：直接更新原區塊備註，不分裂
             act = record.activities.find(a => a.exId === this.state.currentEx.id && (a.note || '') === this.state.editingActivityNote);
             if (act) {
                 act.note = note;
+                act.photo = this.state.currentPhoto;
                 this.state.editingActivityNote = note; // 更新追蹤值，以防連續輸入
             }
         } else {
             // 【新增模式】：若備註不同則自動分流
             act = record.activities.find(a => a.exId === this.state.currentEx.id && (a.note || '') === note);
         }
-        
+
         if (!act) {
             act = {
                 catId: this.state.currentCat ? this.state.currentCat.id : '',
@@ -504,11 +520,12 @@ const app = {
                 exId: this.state.currentEx.id,
                 exName: this.state.currentEx.name,
                 note: note,
+                photo: this.state.currentPhoto,
                 sets: []
             };
             record.activities.push(act);
         }
-        
+
         act.sets.push({ id: Date.now().toString() + Math.random(), kg, reps, u1, u2 });
         store.saveDayRecord(this.state.viewDate, record);
 
@@ -843,9 +860,14 @@ const app = {
                 </div>`;
             }).join('');
 
-            return `<div class="detail-ex-row">
+            const photoThumbnail = act.photo ?
+                `<img src="${act.photo}" class="photo-preview-thumbnail" style="margin-top:8px;" onclick="app.viewPhotoFull('${act.photo}')">` : '';
+
+            return `<div class="detail-ex-row" style="margin-bottom:12px;">
                 <div class="detail-ex-name">${act.exName}</div>
                 ${rowsHtml}
+                ${act.note ? `<div style="font-size:10px; color:var(--text-sub); margin-top:4px;">📝 ${act.note}</div>` : ''}
+                ${photoThumbnail}
             </div>`;
         }).join('');
 
@@ -986,7 +1008,7 @@ const app = {
         const mEl = document.getElementById('setting-muscle');
         const uEl = document.getElementById('setting-muscle-unit');
         const dEl = document.getElementById('setting-date');
-        
+
         if (wEl) wEl.value = s.weight;
         if (hEl) hEl.value = s.height;
         if (fEl) fEl.value = s.fat || '';
@@ -1028,7 +1050,7 @@ const app = {
             mInput.value = (weight * (mVal / 100)).toFixed(1);
             fInput.value = (weight * (fVal / 100)).toFixed(1);
         }
-        
+
         this.renderBodyChart();
     },
 
@@ -1045,7 +1067,7 @@ const app = {
 
         const currentMUnit = document.getElementById('setting-muscle-unit').innerText;
         const currentFUnit = document.getElementById('setting-fat-unit').innerText;
-        
+
         const sorted = [...history].sort((a, b) => new Date(b.date) - new Date(a.date));
         list.innerHTML = sorted.map((h, idx) => {
             // 處理肌肉量顯示
@@ -1115,10 +1137,10 @@ const app = {
 
         const w = container.clientWidth || 200;
         const h = container.clientHeight || 150;
-        const padT = 30; 
-        const padB = 35; 
-        const padL = 35; 
-        const padR = 35; 
+        const padT = 30;
+        const padB = 35;
+        const padL = 35;
+        const padR = 35;
 
         const weights = sorted.map(d => d.weight);
         const fats = sorted.map(d => {
@@ -1187,10 +1209,10 @@ const app = {
 
                 <!-- X 軸日期 (數據點多於 10 個時，每隔一個顯示以防重疊) -->
                 ${sorted.map((d, i) => {
-                    if (sorted.length > 10 && i % 2 !== 0) return ''; 
-                    const dateObj = new Date(d.date);
-                    return `<text x="${getX(i)}" y="${h - padB + 18}" fill="#888" font-size="9" text-anchor="middle">${dateObj.getMonth() + 1}/${dateObj.getDate()}</text>`;
-                }).join('')}
+            if (sorted.length > 10 && i % 2 !== 0) return '';
+            const dateObj = new Date(d.date);
+            return `<text x="${getX(i)}" y="${h - padB + 18}" fill="#888" font-size="9" text-anchor="middle">${dateObj.getMonth() + 1}/${dateObj.getDate()}</text>`;
+        }).join('')}
 
                 <path d="${weightPath}" fill="none" stroke="var(--primary)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />
                 <path d="${fatPath}" fill="none" stroke="#f59e0b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="4,3" />
@@ -1217,12 +1239,12 @@ const app = {
         // 互動事件處理 (Tooltip)
         const svg = container.querySelector('svg');
         const tooltip = document.getElementById('chart-tooltip');
-        
+
         const handleMove = (e) => {
             const rect = svg.getBoundingClientRect();
             const clientX = e.touches ? e.touches[0].clientX : e.clientX;
             const x = ((clientX - rect.left) / rect.width) * w;
-            
+
             let closestIdx = 0;
             let minDist = Infinity;
             sorted.forEach((_, i) => {
@@ -1235,7 +1257,7 @@ const app = {
 
             const d = sorted[closestIdx];
             const tx = getX(closestIdx);
-            
+
             tooltip.innerHTML = `
                 <div class="tooltip-date">${d.date}</div>
                 <div class="tooltip-row">
@@ -1251,11 +1273,11 @@ const app = {
                     <div class="tooltip-value">${muscles[closestIdx].toFixed(1)} ${currentMUnit}</div>
                 </div>
             `;
-            
+
             tooltip.style.display = 'block';
             const tooltipRect = tooltip.getBoundingClientRect();
             let leftPos = (tx / w) * rect.width;
-            
+
             // 決定顯示在左還是右
             if (leftPos + tooltipRect.width + 20 > rect.width) {
                 tooltip.style.left = 'auto';
@@ -1270,8 +1292,8 @@ const app = {
         svg.addEventListener('mousemove', handleMove);
         svg.addEventListener('touchstart', (e) => {
             handleMove(e);
-        }, {passive: false});
-        
+        }, { passive: false });
+
         svg.addEventListener('mouseleave', () => tooltip.style.display = 'none');
         svg.addEventListener('touchend', () => tooltip.style.display = 'none');
     },
@@ -1365,7 +1387,7 @@ const app = {
         const lines = input.split('\n');
         let importedCount = 0;
         let history = store.getBodyHistory();
-        
+
         const tempHistoryMap = {};
         // 先將現有歷史存入 Map，以日期為 key
         history.forEach(h => {
@@ -1376,7 +1398,7 @@ const app = {
             if (!line.trim()) return;
             // 處理 CSV 格式：去掉雙引號並根據逗號分割
             const cols = line.split(',').map(c => c.replace(/"/g, '').trim());
-            
+
             // 跳過表頭或無效列 (歐姆龍格式第 0 欄是日期，第 2 欄是體重，第 3 欄是體脂，第 8 欄是肌肉量)
             if (cols.length < 9 || cols[0].includes('測量日期')) return;
 
@@ -1389,7 +1411,7 @@ const app = {
             const m = String(dObj.getMonth() + 1).padStart(2, '0');
             const d = String(dObj.getDate()).padStart(2, '0');
             const dateRaw = `${y}-${m}-${d}`;
-            
+
             const weight = parseFloat(cols[2]);
             const fat = parseFloat(cols[3]);
             const muscle = parseFloat(cols[8]);
@@ -1617,11 +1639,11 @@ const app = {
             for (let i = 1; i < lines.length; i++) {
                 const cols = lines[i].split(',').map(c => c.trim().replace(/^"|"$/g, ''));
                 if (cols.length < 7) continue;
-                
+
                 const dateStr = cols[0];
                 const dt = parseDateStr(dateStr);
                 if (!dt) continue;
-                
+
                 const dateKey = dateStr; // 暫存 key
                 if (!dayMap[dateKey]) {
                     const existing = store.getDayRecord(dt);
@@ -1644,17 +1666,17 @@ const app = {
                     act = { exId: 'e' + Date.now() + Math.random(), exName, catName, sets: [] };
                     dayMap[dateKey].data.activities.push(act);
                 }
-                
+
                 // 檢查是否已存在完全相同的組數以減少重複（簡單過濾）
                 const isDuplicate = act.sets.some(s => s.kg == kg && s.reps == reps && s.note == (sNote || ''));
                 if (!isDuplicate) {
-                    act.sets.push({ 
-                        id: 's' + Date.now() + Math.random(), 
-                        kg: parseFloat(kg) || 0, 
-                        reps: parseFloat(reps) || 0, 
-                        u1: u1 || 'kg', 
-                        u2: u2 || '下', 
-                        note: sNote || '' 
+                    act.sets.push({
+                        id: 's' + Date.now() + Math.random(),
+                        kg: parseFloat(kg) || 0,
+                        reps: parseFloat(reps) || 0,
+                        u1: u1 || 'kg',
+                        u2: u2 || '下',
+                        note: sNote || ''
                     });
                 }
             }
@@ -1666,7 +1688,68 @@ const app = {
             location.reload();
         };
         reader.readAsText(file);
+    },
+
+    // ─── PHOTO HANDLING ──────────────────────────────────────
+    handlePhotoSelect(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const img = new Image();
+            img.onload = () => {
+                // Resize image to max 800px to save localStorage space
+                const canvas = document.createElement('canvas');
+                const MAX_WIDTH = 800;
+                const MAX_HEIGHT = 800;
+                let width = img.width;
+                let height = img.height;
+
+                if (width > height) {
+                    if (width > MAX_WIDTH) {
+                        height *= MAX_WIDTH / width;
+                        width = MAX_WIDTH;
+                    }
+                } else {
+                    if (height > MAX_HEIGHT) {
+                        width *= MAX_HEIGHT / height;
+                        height = MAX_HEIGHT;
+                    }
+                }
+
+                canvas.width = width;
+                canvas.height = height;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0, width, height);
+
+                const dataUrl = canvas.toDataURL('image/jpeg', 0.7);
+                this.state.currentPhoto = dataUrl;
+                document.getElementById('photo-preview').src = dataUrl;
+                document.getElementById('photo-preview-container').style.display = 'block';
+            };
+            img.src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+    },
+
+    removePhoto() {
+        this.state.currentPhoto = null;
+        document.getElementById('photo-preview-container').style.display = 'none';
+        document.getElementById('photo-input').value = '';
+    },
+
+    viewPhotoFull(src) {
+        const modal = document.getElementById('photo-modal');
+        const modalImg = document.getElementById('photo-modal-img');
+        modalImg.src = src;
+        modal.style.display = 'flex';
+    },
+
+    closePhotoFull() {
+        document.getElementById('photo-modal').style.display = 'none';
     }
 };
+
 
 document.addEventListener('DOMContentLoaded', () => app.init());

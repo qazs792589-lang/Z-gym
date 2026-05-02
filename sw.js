@@ -1,4 +1,4 @@
-const CACHE_NAME = 'fitlog-v9';
+const CACHE_NAME = 'fitlog-v10';
 const ASSETS = [
     './',
     './index.html',
@@ -6,7 +6,7 @@ const ASSETS = [
     './js/app.js',
     './js/store.js',
     './manifest.json',
-    './img/S__30990346.jpg'
+    './img/S__30900257_0.png'
 ];
 
 self.addEventListener('install', event => {

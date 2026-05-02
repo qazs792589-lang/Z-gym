@@ -1309,9 +1309,11 @@ input[type="date"]::-webkit-date-and-time-value {
     width: 80px;
     text-align: center;
 }
+
 .time-input:focus {
     border-color: var(--primary);
 }
+
 .punch-btn {
     background: var(--primary);
     color: #000;
@@ -1322,6 +1324,7 @@ input[type="date"]::-webkit-date-and-time-value {
     font-weight: 800;
     cursor: pointer;
 }
+
 .punch-btn:active {
     opacity: 0.8;
 }
@@ -1347,15 +1350,18 @@ input[type="date"]::-webkit-date-and-time-value {
 .custom-scrollbar::-webkit-scrollbar {
     width: 6px;
 }
+
 .custom-scrollbar::-webkit-scrollbar-track {
-    background: rgba(255,255,255,0.02);
+    background: rgba(255, 255, 255, 0.02);
     border-radius: 10px;
 }
+
 .custom-scrollbar::-webkit-scrollbar-thumb {
     background: #3f3f46;
     border-radius: 10px;
-    border: 1px solid rgba(255,255,255,0.05);
+    border: 1px solid rgba(255, 255, 255, 0.05);
 }
+
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
     background: var(--primary);
 }
@@ -1388,6 +1394,7 @@ input[type="date"]::-webkit-date-and-time-value {
     gap: 8px;
     padding: 0 20px;
 }
+
 .chart-tooltip {
     position: absolute;
     background: rgba(9, 9, 11, 0.95);
@@ -1459,6 +1466,57 @@ input[type="date"]::-webkit-date-and-time-value {
     transform: scale(1.1);
 }
 
+/* Photo Support */
+.photo-btn {
+    background: var(--border-color);
+    border: 1px solid var(--primary);
+    color: var(--primary);
+    padding: 4px 10px;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: bold;
+    cursor: pointer;
+}
 
+.photo-preview-thumbnail {
+    width: 60px;
+    height: 60px;
+    border-radius: 8px;
+    object-fit: cover;
+    border: 1px solid var(--border-color);
+    cursor: pointer;
+}
 
-
+.photo-remove-btn {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    background: rgba(0, 0, 0, 0.6);
+    color: white;
+    border: none;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 14px;
+    backdrop-filter: blur(4px);
+}
+
+.photo-modal {
+    background: rgba(0, 0, 0, 0.95);
+    display: none;
+    justify-content: center;
+    align-items: center;
+    z-index: 2000;
+}
+
+.photo-modal img {
+    max-width: 95%;
+    max-height: 90%;
+    object-fit: contain;
+    border-radius: 8px;
+    box-shadow: 0 0 30px rgba(0,0,0,0.5);
+}

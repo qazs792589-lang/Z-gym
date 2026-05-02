@@ -10,8 +10,8 @@
     <title>Fit Log</title>
     <link rel="manifest" href="manifest.json">
     <link rel="stylesheet" href="css/style.css">
-    <link rel="apple-touch-icon" href="img/S__30990346.jpg">
-    <link rel="icon" type="image/jpeg" href="img/S__30990346.jpg">
+    <link rel="apple-touch-icon" href="./img/S__30900257_0.png">
+    <link rel="icon" type="image/png" href="./img/S__30900257_0.png">
     <meta name="apple-mobile-web-app-title" content="Fit Log">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -21,9 +21,9 @@
     <div id="app">
         <!-- Header -->
         <header id="main-header">
-            <div style="height: 65px; display: flex; align-items: center; overflow: hidden;">
-                <img src="./img/S__30900257_0.png" alt="Logo"
-                    style="height: 85px; width: auto; object-fit: contain; clip-path: inset(15% 0 15% 0);">
+            <div
+                style="height: 65px; display: flex; align-items: center; justify-content: center; overflow: hidden; padding: 5px;">
+                <img src="./img/S__30900257_0.png" alt="Logo" style="height: 100%; width: auto; object-fit: contain;">
             </div>
             <span class="version-badge">v2.1</span>
         </header>
@@ -480,7 +480,15 @@
 
                 <!-- Notes -->
                 <div class="glass-card">
-                    <div class="field-label">動作備註（選填）</div>
+                    <div class="field-label" style="display:flex; justify-content:space-between; align-items:center;">
+                        <span>動作備註（選填）</span>
+                        <button class="photo-btn" onclick="document.getElementById('photo-input').click()">📷 拍下機器</button>
+                    </div>
+                    <input type="file" id="photo-input" accept="image/*" capture="environment" style="display:none;" onchange="app.handlePhotoSelect(event)">
+                    <div id="photo-preview-container" style="display:none; margin-top:10px; position:relative; margin-bottom:10px;">
+                        <img id="photo-preview" src="" style="width:100%; border-radius:12px; border:1px solid var(--border-color);">
+                        <button class="photo-remove-btn" onclick="app.removePhoto()">✕</button>
+                    </div>
                     <textarea id="workout-notes" class="summary-textarea"
                         style="height:60px; margin-top:8px; font-size:14px;" placeholder="例如：感覺肌肉很緊..."></textarea>
                 </div>
@@ -553,14 +561,18 @@
             </div>
         </div>
 
+        <!-- Full Screen Photo Viewer -->
+        <div id="photo-modal" class="modal photo-modal" onclick="app.closePhotoFull()">
+            <img id="photo-modal-img" src="">
+        </div>
+
     </div>
 
     <script src="./js/store.js"></script>
     <script src="./js/app.js"></script>
     <script>
         if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('./sw.js');
-        }
+            navigator.serviceWorker.register('./s');  }
     </script>
 </body>
 
