@@ -12,7 +12,8 @@ const app = {
         wheelValue: 0,
         repsScrollTimeout: null,
         trainScrollTimeout: null,
-        detailDate: null
+        detailDate: null,
+        editingActivityNote: null // 用於追蹤是從哪個特定備註區塊進來編輯的
     },
 
     init() {
@@ -51,11 +52,13 @@ const app = {
 
     closeSubView() {
         document.querySelectorAll('.sub-view').forEach(v => v.classList.remove('active'));
+        this.state.editingActivityNote = null;
         this.renderRecordView();
     },
 
     backToPicker() {
         document.getElementById('view-exercise-list').classList.remove('active');
+        this.state.editingActivityNote = null;
     },
 
     returnToToday() {
@@ -206,7 +209,7 @@ const app = {
                 const repsBadges = groupSets.map(s => {
                     const u2 = s.u2 || (isCardio ? '秒' : '下');
                     const label = `${s.reps}${u2}`;
-                    return `<div class="rep-badge" onclick="app.deleteSet('${act.exId}', '${s.id}')">${label}</div>`;
+                    return `<div class="rep-badge" onclick="app.deleteSet('${act.exId}', '${s.id}', '${(act.note || '').replace(/'/g, "\\'")}')">${label}</div>`;
                 }).join('');
 
                 const u1 = first.u1 || (isCardio ? '秒' : 'kg');
@@ -228,8 +231,8 @@ const app = {
                 <div class="action-item-header">
                     <span class="action-item-name">${act.exName} <span style="font-size:12px; color:var(--text-sub); font-weight:normal; opacity:0.8; margin-left:10px;">[${act.catName || '未分類'}]</span></span>
                     <div style="display:flex; gap:10px; align-items:center;">
-                        <button class="btn-outline-green" style="padding:5px 12px; font-size:13px;" onclick="app.openWorkout('${act.exId}', '${act.exName}', '${act.catName || ''}')">繼續</button>
-                        <span style="color:var(--danger); font-size:12px; cursor:pointer;" onclick="app.deleteActivity('${act.exId}')">刪除</span>
+                        <button class="btn-outline-green" style="padding:5px 12px; font-size:13px;" onclick="app.openWorkout('${act.exId}', '${act.exName}', '${act.catName || ''}', '${(act.note || '').replace(/'/g, "\\'")}')">繼續</button>
+                        <span style="color:var(--danger); font-size:12px; cursor:pointer;" onclick="app.deleteActivity('${act.exId}', '${(act.note || '').replace(/'/g, "\\'")}')">刪除</span>
                     </div>
                 </div>
                 ${groupsHtml}
@@ -340,13 +343,15 @@ const app = {
     },
 
     // ─── WORKOUT (single page) ───────────────────────────────
-    openWorkout(exId, exName, catName = '') {
+    openWorkout(exId, exName, catName = '', note = null) {
         this.state.currentEx = { id: exId, name: exName };
+        this.state.editingActivityNote = note; // 關鍵：如果是從繼續按鈕進來，note 不會是 null
         document.getElementById('workout-title').innerText = exName;
 
         // Today's sets for this exercise
         const record = store.getDayRecord(this.state.viewDate);
-        const act = record.activities.find(a => a.exId === exId);
+        // 如果有指定備註，就找那一筆；否則找第一筆（新增模式）
+        const act = record.activities.find(a => a.exId === exId && (note === null || (a.note || '') === note));
 
         // If we have an existing activity or a passed catName, sync the currentCat
         if (catName) {
@@ -424,7 +429,7 @@ const app = {
             const u1 = firstSet.u1 || (isCardio ? '秒' : 'kg');
             const repsStr = groupSets.map(s => {
                 const u2 = s.u2 || (isCardio ? '秒' : '下');
-                return `<span class="workout-log-set" onclick="app.deleteSet('${act.exId}', '${s.id}')">${s.reps}${u2}</span>`;
+                return `<span class="workout-log-set" onclick="app.deleteSet('${act.exId}', '${s.id}', '${(act.note || '').replace(/'/g, "\\'")}')">${s.reps}${u2}</span>`;
             }).join(' · ');
             return `<div style="display:flex; gap:10px; font-size:13px; margin-bottom:4px;">
                 <span style="color:var(--primary); font-weight:800; min-width:60px;">${firstSet.kg}${u1}</span>
@@ -438,21 +443,24 @@ const app = {
         const isCardio = this.state.currentCat && this.state.currentCat.name === '有氧';
         let kg, reps;
         let u1, u2;
+        const note = document.getElementById('workout-notes').value.trim();
 
         const kgRaw = isCardio ? this.state.trainValue : document.getElementById('input-kg').value;
         kg = parseFloat(kgRaw);
 
         // 如果點擊「結束動作」且數值為 0 或空白，直接視為取消並關閉
         if (isFinished && (kgRaw === '' || isNaN(kg) || kg <= 0)) {
-            const note = document.getElementById('workout-notes').value.trim();
-            if (note) {
+            if (this.state.currentEx) {
                 let record = store.getDayRecord(this.state.viewDate);
-                let act = record.activities.find(a => a.exId === this.state.currentEx.id);
+                // 優先使用 editingActivityNote 鎖定對象
+                let searchNote = this.state.editingActivityNote !== null ? this.state.editingActivityNote : note;
+                let act = record.activities.find(a => a.exId === this.state.currentEx.id && (a.note || '') === searchNote);
                 if (act) {
                     act.note = note;
                     store.saveDayRecord(this.state.viewDate, record);
                 }
             }
+            this.state.editingActivityNote = null;
             this.closeSubView();
             return;
         }
@@ -474,28 +482,40 @@ const app = {
             u1 = 'kg';
             u2 = '下';
         }
-        const note = document.getElementById('workout-notes').value.trim();
-
         let record = store.getDayRecord(this.state.viewDate);
-        let act = record.activities.find(a => a.exId === this.state.currentEx.id);
+        
+        let act;
+        if (this.state.editingActivityNote !== null) {
+            // 【編輯模式】：直接更新原區塊備註，不分裂
+            act = record.activities.find(a => a.exId === this.state.currentEx.id && (a.note || '') === this.state.editingActivityNote);
+            if (act) {
+                act.note = note;
+                this.state.editingActivityNote = note; // 更新追蹤值，以防連續輸入
+            }
+        } else {
+            // 【新增模式】：若備註不同則自動分流
+            act = record.activities.find(a => a.exId === this.state.currentEx.id && (a.note || '') === note);
+        }
+        
         if (!act) {
             act = {
                 catId: this.state.currentCat ? this.state.currentCat.id : '',
                 catName: this.state.currentCat ? this.state.currentCat.name : '',
                 exId: this.state.currentEx.id,
                 exName: this.state.currentEx.name,
+                note: note,
                 sets: []
             };
             record.activities.push(act);
         }
-        act.note = note;
-        act.sets.push({ id: Date.now().toString(), kg, reps, u1, u2 });
+        
+        act.sets.push({ id: Date.now().toString() + Math.random(), kg, reps, u1, u2 });
         store.saveDayRecord(this.state.viewDate, record);
 
         if (isFinished) {
+            this.state.editingActivityNote = null;
             this.closeSubView();
         } else {
-            // Flash the input border, update log
             this.renderWorkoutLog(act);
             // Update quick kg buttons to include new kg if not already
             const usedKgs = [...new Set(act.sets.map(s => s.kg))].sort((a, b) => b - a);
@@ -509,13 +529,15 @@ const app = {
         }
     },
 
-    deleteSet(exId, setId) {
+    deleteSet(exId, setId, note = '') {
         if (!confirm('刪除此組紀錄？')) return;
         let record = store.getDayRecord(this.state.viewDate);
-        const act = record.activities.find(a => a.exId === exId);
+        const act = record.activities.find(a => a.exId === exId && (a.note || '') === note);
         if (act) {
             act.sets = act.sets.filter(s => s.id !== setId);
-            if (act.sets.length === 0) record.activities = record.activities.filter(a => a.exId !== exId);
+            if (act.sets.length === 0) {
+                record.activities = record.activities.filter(a => a !== act);
+            }
             store.saveDayRecord(this.state.viewDate, record);
             this.renderRecordView();
 
@@ -527,10 +549,10 @@ const app = {
         }
     },
 
-    deleteActivity(exId) {
+    deleteActivity(exId, note = '') {
         if (!confirm('確定刪除此動作的所有組數？')) return;
         let record = store.getDayRecord(this.state.viewDate);
-        record.activities = record.activities.filter(a => a.exId !== exId);
+        record.activities = record.activities.filter(a => !(a.exId === exId && (a.note || '') === note));
         store.saveDayRecord(this.state.viewDate, record);
         this.renderRecordView();
     },
