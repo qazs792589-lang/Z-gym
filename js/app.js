@@ -356,8 +356,8 @@ const app = {
 
         // Today's sets for this exercise
         const record = store.getDayRecord(this.state.viewDate);
-        // 如果有指定備註，就找那一筆；否則找第一筆（新增模式）
-        const act = record.activities.find(a => a.exId === exId && (note === null || (a.note || '') === note));
+        // 只在有指定備註（編輯模式）時才抓取舊資料，否則（新增模式）一律為 null 確保介面清空
+        const act = note !== null ? record.activities.find(a => a.exId === exId && (a.note || '') === note) : null;
 
         // If we have an existing activity or a passed catName, sync the currentCat
         if (catName) {
@@ -783,8 +783,19 @@ const app = {
             grid.appendChild(cell);
         }
         this.updateHistoryStats();
-        document.getElementById('day-detail-content').className = 'detail-empty';
-        document.getElementById('day-detail-content').innerHTML = '<span style="font-size:18px;">📅</span><span style="font-size:12px;">點選日期查看</span>';
+        
+        if (this.state.weeksOffset === 0) {
+            const todayCell = grid.querySelector('.day-cell.today');
+            if (todayCell) {
+                todayCell.click();
+            } else {
+                document.getElementById('day-detail-content').className = 'detail-empty';
+                document.getElementById('day-detail-content').innerHTML = '<span style="font-size:18px;">📅</span><span style="font-size:12px;">點選日期查看</span>';
+            }
+        } else {
+            document.getElementById('day-detail-content').className = 'detail-empty';
+            document.getElementById('day-detail-content').innerHTML = '<span style="font-size:18px;">📅</span><span style="font-size:12px;">點選日期查看</span>';
+        }
     },
 
     showDayDetail(d) {
