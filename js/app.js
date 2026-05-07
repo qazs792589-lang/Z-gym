@@ -1064,6 +1064,7 @@ const app = {
         }
 
         this.renderBodyChart();
+        this.renderBodyHistory();
     },
 
     renderBodyHistory() {
