@@ -736,20 +736,12 @@ const app = {
         let baseMonday;
         let mainMonth, mainYear;
 
-        if (this.state.weeksOffset === 0) {
-            const dayOfWeek = (today.getDay() + 6) % 7;
-            baseMonday = new Date(today.getFullYear(), today.getMonth(), today.getDate() - dayOfWeek - 21);
-            const midDate = new Date(baseMonday.getFullYear(), baseMonday.getMonth(), baseMonday.getDate() + 14);
-            mainMonth = midDate.getMonth();
-            mainYear = midDate.getFullYear();
-        } else {
-            const targetDate = new Date(today.getFullYear(), today.getMonth() + (this.state.weeksOffset / 4), 1);
-            mainMonth = targetDate.getMonth();
-            mainYear = targetDate.getFullYear();
-            const firstDayOfMonth = new Date(mainYear, mainMonth, 1);
-            const dayOfFirst = (firstDayOfMonth.getDay() + 6) % 7;
-            baseMonday = new Date(mainYear, mainMonth, 1 - dayOfFirst);
-        }
+        const targetDate = new Date(today.getFullYear(), today.getMonth() + (this.state.weeksOffset / 4), 1);
+        mainMonth = targetDate.getMonth();
+        mainYear = targetDate.getFullYear();
+        const firstDayOfMonth = new Date(mainYear, mainMonth, 1);
+        const dayOfFirst = (firstDayOfMonth.getDay() + 6) % 7;
+        baseMonday = new Date(mainYear, mainMonth, 1 - dayOfFirst);
 
         document.getElementById('calendar-month-label').innerText = `${mainYear}年${mainMonth + 1}月`;
 
@@ -782,7 +774,7 @@ const app = {
             };
             grid.appendChild(cell);
         }
-        this.updateHistoryStats();
+        this.updateHistoryStats(today);
         
         if (this.state.weeksOffset === 0) {
             const todayCell = grid.querySelector('.day-cell.today');
@@ -800,6 +792,7 @@ const app = {
 
     showDayDetail(d) {
         this.state.detailDate = d;
+        this.updateHistoryStats(d);
         const record = store.getDayRecord(d);
         const panel = document.getElementById('day-detail-content');
         const WEEKDAY_NAMES = ['日', '一', '二', '三', '四', '五', '六'];
@@ -882,6 +875,33 @@ const app = {
             </div>`;
         }).join('');
 
+        const mondayOffset = d.getDay() === 0 ? -6 : 1 - d.getDay();
+        const monday = new Date(d.getFullYear(), d.getMonth(), d.getDate() + mondayOffset);
+        let weekSummaryHtml = '';
+        for (let i = 0; i < 7; i++) {
+            const wd = new Date(monday.getFullYear(), monday.getMonth(), monday.getDate() + i);
+            if (wd.getTime() === d.getTime()) continue; // Skip selected day
+            const wr = store.getDayRecord(wd);
+            if (wr.activities.length > 0) {
+                const cats = [...new Set(wr.activities.map(a => a.catName))].join('、');
+                weekSummaryHtml += `
+                    <div style="font-size:10px; color:var(--text-sub); display:flex; justify-content:space-between; padding:4px 0; border-bottom:1px solid rgba(255,255,255,0.03);" onclick="app.showDayDetail(new Date(${wd.getTime()}))">
+                        <span>${wd.getMonth() + 1}/${wd.getDate()} 週${WEEKDAY_NAMES[wd.getDay()]}</span>
+                        <span style="color:var(--primary);">${cats}</span>
+                    </div>
+                `;
+            }
+        }
+
+        if (weekSummaryHtml) {
+            weekSummaryHtml = `
+                <div style="margin-top:16px; padding-top:12px; border-top:2px dashed rgba(255,255,255,0.1);">
+                    <div style="font-size:11px; font-weight:bold; color:var(--primary); margin-bottom:6px;">📅 同週其他訓練</div>
+                    ${weekSummaryHtml}
+                </div>
+            `;
+        }
+
         panel.innerHTML = `
             ${dateNavHtml}
             <div class="detail-meta" style="font-size:11px; margin-bottom:8px;">${metaParts.join(' · ')}</div>
@@ -890,6 +910,7 @@ const app = {
             </div>
             ${record.notes ? `<div style="font-size:11px; color:var(--text-sub); margin-bottom:8px; padding:6px 8px; background:rgba(255,255,255,0.03); border-radius:8px;">📝 ${record.notes}</div>` : ''}
             ${jumpBtn}
+            ${weekSummaryHtml}
         `;
     },
 
@@ -913,13 +934,13 @@ const app = {
 
     changeWeeks(delta) { this.state.weeksOffset += delta; this.renderHistoryView(); },
 
-    updateHistoryStats() {
-        const today = new Date();
-        const mainYear = today.getFullYear();
-        const mainMonth = today.getMonth();
-        const dow = today.getDay();
+    updateHistoryStats(refDate) {
+        const date = refDate || new Date();
+        const mainYear = date.getFullYear();
+        const mainMonth = date.getMonth();
+        const dow = date.getDay();
         const mondayOffset = dow === 0 ? -6 : 1 - dow;
-        const monday = new Date(mainYear, mainMonth, today.getDate() + mondayOffset);
+        const monday = new Date(mainYear, mainMonth, date.getDate() + mondayOffset);
 
         let wd = 0, wt = 0, md = 0, mt = 0;
         const getDayDuration = (record) => {
@@ -952,6 +973,18 @@ const app = {
         document.getElementById('hist-week-time').innerText = Math.round(wt);
         document.getElementById('hist-month-days').innerText = md;
         document.getElementById('hist-month-time').innerText = Math.round(mt);
+
+        // 更新標籤讓使用者知道看的是哪一週/月
+        const sunday = new Date(monday.getFullYear(), monday.getMonth(), monday.getDate() + 6);
+        const weekRangeStr = `${monday.getMonth() + 1}/${monday.getDate()}-${sunday.getMonth() + 1}/${sunday.getDate()}`;
+        
+        const labels = document.querySelectorAll('#view-history .stat-label');
+        if (labels.length >= 4) {
+            labels[0].innerText = `${weekRangeStr} 天數`;
+            labels[1].innerText = `${weekRangeStr} 分鐘`;
+            labels[2].innerText = `${mainMonth + 1}月 天數`;
+            labels[3].innerText = `${mainMonth + 1}月 分鐘`;
+        }
     },
 
     // ─── SUMMARY ─────────────────────────────────────────────
@@ -1028,7 +1061,13 @@ const app = {
         if (uEl) uEl.innerText = s.muscleUnit || 'kg';
         const fuEl = document.getElementById('setting-fat-unit');
         if (fuEl) fuEl.innerText = s.fatUnit || '%';
-        if (dEl && !dEl.value) dEl.value = new Date().toISOString().split('T')[0];
+        if (dEl) {
+            const now = new Date();
+            const y = now.getFullYear();
+            const m = String(now.getMonth() + 1).padStart(2, '0');
+            const d = String(now.getDate()).padStart(2, '0');
+            dEl.value = `${y}-${m}-${d}`;
+        }
 
         this.renderBodyHistory();
     },
