@@ -895,8 +895,8 @@ body {
 }
 
 .day-cell {
-    aspect-ratio: 1 / 1.25;
-    /* 稍微拉高，給文字更多空間 */
+    aspect-ratio: 1 / 1.55;
+    /* 增加高度，容納更多標籤 */
     border-radius: 12px;
     /* 圓角加大更具現代感 */
     background: #1c1c1e;
@@ -950,11 +950,11 @@ body {
 }
 
 .day-num {
-    font-size: 18px !important;
+    font-size: 16px !important;
     font-weight: 800;
     color: #eee;
     line-height: 1;
-    margin-bottom: 6px;
+    margin-bottom: 4px;
     text-align: center;
     pointer-events: none;
 }
@@ -962,7 +962,7 @@ body {
 .day-tags {
     display: flex;
     flex-direction: column;
-    gap: 3px;
+    gap: 2px;
     width: 100%;
     align-items: center;
     pointer-events: none;

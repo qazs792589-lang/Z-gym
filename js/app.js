@@ -26,19 +26,40 @@ const app = {
     esc(str) {
         if (!str) return '';
         return str.replace(/\\/g, '\\\\')
-                  .replace(/'/g, "\\'")
-                  .replace(/"/g, '&quot;')
-                  .replace(/\n/g, '\\n')
-                  .replace(/\r/g, '\\r');
+            .replace(/'/g, "\\'")
+            .replace(/"/g, '&quot;')
+            .replace(/\n/g, '\\n')
+            .replace(/\r/g, '\\r');
     },
 
     init() {
         window.app = this;
+        this.fixCorruptedData(); // 救回 5/14 的紀錄
         this.renderRecordView();
         this.renderSettingsView();
         this.initRepsWheel();
         this.initTrainWheel();
         this.initTimePickerCustom();
+    },
+
+    fixCorruptedData() {
+        const key = 'fitlog_v2_day_2026-5-14';
+        const raw = localStorage.getItem(key);
+        if (!raw) return;
+        try {
+            const data = JSON.parse(raw);
+            let fixed = false;
+            data.activities.forEach(act => {
+                if (act.note && act.note.includes('\n')) {
+                    act.note = act.note.replace(/\n/g, ' ');
+                    fixed = true;
+                }
+            });
+            if (fixed) {
+                localStorage.setItem(key, JSON.stringify(data));
+                console.log('5/14 紀錄損毀修復完成');
+            }
+        } catch (e) { }
     },
 
     // ─── NAVIGATION ──────────────────────────────────────────
@@ -217,7 +238,7 @@ const app = {
             const isCardio = act.catName === '有氧';
             const isSuperset = act.exName.includes('超級組');
             const displayTitle = isSuperset ? `<span style="color:var(--primary);">[${act.catName || '未分類'}]</span> ${act.exName}` : act.exName;
-            
+
             let groupsHtml = '';
             if (isSuperset) {
                 const setsHtml = act.sets.map((s, i) => {
@@ -406,21 +427,21 @@ const app = {
     openWorkout(exId, exName, catName = '', actId = null) {
         this.state.currentEx = { id: exId, name: exName };
         this.state.editingActivityId = actId;
-        
+
         // Today's sets for this exercise
         const record = store.getDayRecord(this.state.viewDate);
         const act = actId ? record.activities.find(a => a.id === actId) : null;
 
         // Superset detection
         this.state.isSuperset = exName.includes('超級組');
-        
+
         // Sync category
         if (catName) {
             this.state.currentCat = { id: '', name: catName };
         } else if (act && act.catName) {
             this.state.currentCat = { id: act.catId || '', name: act.catName };
         }
-        
+
         const catLabel = this.state.currentCat ? this.state.currentCat.name : '';
         const displayTitle = this.state.isSuperset && catLabel ? `[${catLabel}] ${exName}` : exName;
         document.getElementById('workout-title').innerText = displayTitle;
@@ -430,7 +451,7 @@ const app = {
         if (this.state.isSuperset) {
             superCtrl.style.display = 'block';
             normalInputs.style.display = 'none';
-            
+
             if (act && act.supersetData) {
                 this.state.supersetData = JSON.parse(JSON.stringify(act.supersetData));
             } else if (!act) {
@@ -468,7 +489,7 @@ const app = {
         // Reset inputs
         document.getElementById('input-kg').value = '';
         document.getElementById('workout-notes').value = (act && act.note) ? act.note : '';
-        
+
         // Photo sync
         this.state.currentPhoto = (act && act.photo) ? act.photo : null;
         if (this.state.currentPhoto) {
@@ -494,7 +515,7 @@ const app = {
     renderSupersetInputs() {
         const container = document.getElementById('superset-cards-container');
         if (!container) return;
-        
+
         container.innerHTML = this.state.supersetData.map((data, idx) => {
             const char = String.fromCharCode(65 + idx); // A, B, C...
             return `
@@ -571,7 +592,7 @@ const app = {
             return;
         }
         el.className = '';
-        
+
         const isSuperset = act.exName.includes('超級組');
 
         if (isSuperset) {
@@ -645,7 +666,7 @@ const app = {
             if (isFinished && kgRaw === '') {
                 if (this.state.currentEx) {
                     let record = store.getDayRecord(this.state.viewDate);
-                    let act = this.state.editingActivityId ? 
+                    let act = this.state.editingActivityId ?
                         record.activities.find(a => a.id === this.state.editingActivityId) :
                         record.activities.find(a => a.exId === this.state.currentEx.id && (a.note || '') === note);
 
@@ -719,7 +740,7 @@ const app = {
             // For superset, we store a composite set
             act.sets.push({
                 id: Date.now().toString() + Math.random(),
-                kg: compositeSuperset[0].kg, 
+                kg: compositeSuperset[0].kg,
                 reps: compositeSuperset[0].reps,
                 u1: 'kg', u2: '下',
                 superset: compositeSuperset
@@ -977,7 +998,7 @@ const app = {
             grid.appendChild(cell);
         }
         this.updateHistoryStats(today);
-        
+
         if (this.state.weeksOffset === 0) {
             const todayCell = grid.querySelector('.day-cell.today');
             if (todayCell) {
@@ -1139,7 +1160,7 @@ const app = {
         const d = this.state.detailDate;
         if (!d) return;
         const next = new Date(d.getFullYear(), d.getMonth(), d.getDate() + delta);
-        
+
         // Sync calendar selection
         document.querySelectorAll('.day-cell.selected').forEach(c => c.classList.remove('selected'));
         const cell = document.querySelector(`.day-cell[data-time="${next.getTime()}"]`);
@@ -1205,7 +1226,7 @@ const app = {
         // 更新標籤讓使用者知道看的是哪一週/月
         const sunday = new Date(monday.getFullYear(), monday.getMonth(), monday.getDate() + 6);
         const weekRangeStr = `${monday.getMonth() + 1}/${monday.getDate()}-${sunday.getMonth() + 1}/${sunday.getDate()}`;
-        
+
         const labels = document.querySelectorAll('#view-history .stat-label');
         if (labels.length >= 4) {
             labels[0].innerText = `${weekRangeStr} 天數`;
@@ -1804,7 +1825,12 @@ const app = {
             const typeStr = (record.types || []).join('、');
             record.activities.forEach(act => {
                 act.sets.forEach(s => {
-                    const row = [...baseInfo, typeStr, act.catName, act.exName, (act.note || '').replace(/,/g, '，'), s.kg, s.u1 || (act.catName === '有氧' ? '秒' : 'kg'), s.reps, s.u2 || (act.catName === '有氧' ? '秒' : '下'), (s.note || '').replace(/,/g, '，')];
+                    const cleanActNote = (act.note || '').replace(/,/g, '，').replace(/\n/g, ' ');
+                    const cleanSetNote = (s.note || '').replace(/,/g, '，').replace(/\n/g, ' ');
+                    const cleanKg = String(s.kg).replace(/,/g, '，').replace(/\n/g, ' ');
+                    const cleanReps = String(s.reps).replace(/,/g, '，').replace(/\n/g, ' ');
+
+                    const row = [...baseInfo, typeStr, act.catName, act.exName, cleanActNote, cleanKg, s.u1 || (act.catName === '有氧' ? '秒' : 'kg'), cleanReps, s.u2 || (act.catName === '有氧' ? '秒' : '下'), cleanSetNote];
                     csv += row.join(',') + '\n';
                 });
             });
