@@ -506,6 +506,24 @@ body {
     opacity: .8;
 }
 
+.btn-tab {
+    background: var(--border-color);
+    border: 1.5px solid transparent;
+    color: var(--text-sub);
+    padding: 10px;
+    border-radius: 10px;
+    font-weight: 700;
+    font-size: 14px;
+    cursor: pointer;
+    transition: .2s;
+}
+
+.btn-tab.active {
+    background: var(--primary-glow);
+    border-color: var(--primary);
+    color: var(--primary);
+}
+
 .btn-text {
     background: transparent;
     border: none;
@@ -574,7 +592,156 @@ body {
     border-radius: 8px;
 }
 
-/* Big Number Input (weight step) */
+/* Superset New UI */
+.superset-card {
+    background: rgba(255, 255, 255, 0.04);
+    border: 1.5px solid var(--border-color);
+    border-radius: 16px;
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.superset-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    padding-bottom: 8px;
+}
+
+.superset-name-input {
+    background: transparent;
+    border: none;
+    color: var(--primary);
+    font-size: 14px;
+    font-weight: 800;
+    outline: none;
+    flex: 1;
+}
+
+.superset-card-body {
+    display: flex;
+    gap: 12px;
+}
+
+.superset-card-body .input-box {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.superset-card-body label {
+    font-size: 11px;
+    color: var(--text-sub);
+    font-weight: 700;
+}
+
+.super-input-val, .super-display-val {
+    background: rgba(0, 0, 0, 0.2);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    color: var(--primary);
+    padding: 10px;
+    font-size: 24px;
+    font-weight: 900;
+    width: 100%;
+    height: 52px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    outline: none;
+}
+
+.super-display-val {
+    cursor: pointer;
+    transition: all 0.1s;
+}
+
+.super-display-val:active {
+    background: rgba(163, 230, 53, 0.1);
+    transform: scale(0.98);
+}
+
+.super-input-val:focus {
+    border-color: var(--primary);
+    background: rgba(163, 230, 53, 0.05);
+}
+
+/* Superset Display */
+.superset-display-row {
+    display: flex;
+    gap: 12px;
+    padding: 10px;
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 12px;
+    margin-top: 8px;
+    align-items: center;
+}
+
+.superset-tag {
+    font-size: 10px;
+    font-weight: 900;
+    color: var(--primary);
+    background: var(--primary-glow);
+    padding: 4px 8px;
+    border-radius: 6px;
+    white-space: nowrap;
+}
+
+.superset-pair {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.superset-sub-item {
+    display: flex;
+    justify-content: space-between;
+    font-size: 13px;
+}
+
+.sub-name {
+    color: var(--text-sub);
+}
+
+.sub-val {
+    font-weight: 700;
+    color: var(--text-main);
+}
+
+/* Superset Log in Workout View */
+.superset-log-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.superset-log-set-num {
+    font-size: 11px;
+    font-weight: 900;
+    color: #555;
+}
+
+.superset-log-details {
+    flex: 1;
+    font-size: 14px;
+    font-weight: 700;
+}
+
+.workout-log-set-del {
+    color: var(--danger);
+    font-size: 18px;
+    cursor: pointer;
+    padding: 4px;
+}
+
 .big-number-input {
     width: 100%;
     background: transparent;
@@ -721,7 +888,10 @@ body {
 }
 
 .calendar-days {
-    display: contents;
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 6px;
+    padding: 0 5px;
 }
 
 .day-cell {
@@ -786,6 +956,7 @@ body {
     line-height: 1;
     margin-bottom: 6px;
     text-align: center;
+    pointer-events: none;
 }
 
 .day-tags {
@@ -794,6 +965,7 @@ body {
     gap: 3px;
     width: 100%;
     align-items: center;
+    pointer-events: none;
 }
 
 .day-tag {
@@ -1163,8 +1335,7 @@ body {
 }
 
 .workout-log-card {
-    max-height: 140px;
-    overflow-y: auto;
+    margin-bottom: 16px;
 }
 
 .workout-log-title {

@@ -174,7 +174,7 @@
                         <div class="weekday">六</div>
                         <div class="weekday">日</div>
                     </div>
-                    <div id="calendar-days" class="calendar-days-grid"></div>
+                    <div id="calendar-days" class="calendar-days"></div>
                 </div>
             </div>
 
@@ -393,15 +393,21 @@
                 <h2 id="workout-title">紀錄動作</h2>
             </header>
             <div class="content workout-content">
-
                 <!-- Today's sets (compact summary) -->
-                <div class="glass-card workout-log-card">
+                <div class="glass-card workout-log-card" style="margin-bottom:16px;">
                     <div class="workout-log-title">今日已紀錄</div>
                     <div id="workout-sets-list" class="workout-log-empty">暫無紀錄</div>
                 </div>
 
-                <!-- Weight + Reps side by side -->
-                <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+                <div id="superset-controls" style="display:none; margin-bottom:16px;">
+                    <div id="superset-cards-container" style="display:flex; flex-direction:column; gap:16px;">
+                        <!-- Cards will be injected here by app.renderSupersetInputs() -->
+                    </div>
+                    <button class="btn-outline-green" style="width:100%; margin-top:12px; padding:12px; border-style:dashed;" onclick="app.addSupersetMove()">＋ 新增超級組動作</button>
+                </div>
+
+                <!-- Weight + Reps side by side (Only for normal mode) -->
+                <div id="normal-workout-inputs" style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
 
                     <!-- Field 1 (Weight or Train Time) -->
                     <div class="glass-card"

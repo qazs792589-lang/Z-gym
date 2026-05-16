@@ -13,8 +13,23 @@ const app = {
         repsScrollTimeout: null,
         trainScrollTimeout: null,
         detailDate: null,
-        editingActivityNote: null, // 用於追蹤是從哪個特定備註區塊進來編輯的
-        currentPhoto: null
+        editingActivityId: null, // 用於追蹤正在編輯的特定活動 ID
+        currentPhoto: null,
+        isSuperset: false,
+        supersetIndex: 0,
+        supersetData: [
+            { name: '', kg: '', reps: 10 },
+            { name: '', kg: '', reps: 10 }
+        ]
+    },
+
+    esc(str) {
+        if (!str) return '';
+        return str.replace(/\\/g, '\\\\')
+                  .replace(/'/g, "\\'")
+                  .replace(/"/g, '&quot;')
+                  .replace(/\n/g, '\\n')
+                  .replace(/\r/g, '\\r');
     },
 
     init() {
@@ -53,14 +68,14 @@ const app = {
 
     closeSubView() {
         document.querySelectorAll('.sub-view').forEach(v => v.classList.remove('active'));
-        this.state.editingActivityNote = null;
+        this.state.editingActivityId = null;
         this.state.currentPhoto = null;
         this.renderRecordView();
     },
 
     backToPicker() {
         document.getElementById('view-exercise-list').classList.remove('active');
-        this.state.editingActivityNote = null;
+        this.state.editingActivityId = null;
     },
 
     returnToToday() {
@@ -108,6 +123,16 @@ const app = {
         // Remove forward button restriction
         const fwdBtn = document.getElementById('fwd-day-btn');
         if (fwdBtn) { fwdBtn.disabled = false; fwdBtn.style.opacity = '1'; }
+
+        // Ensure all activities have unique IDs
+        let changed = false;
+        (record.activities || []).forEach(a => {
+            if (!a.id) {
+                a.id = 'act-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
+                changed = true;
+            }
+        });
+        if (changed) store.saveDayRecord(this.state.viewDate, record);
 
         this.updateStats(record);
         this.renderTypeChips(record.types || []);
@@ -186,42 +211,67 @@ const app = {
 
         list.innerHTML = activities.map(act => {
             const isCardio = act.catName === '有氧';
-            // Group sets by value and unit
-            const groups = {};
-            act.sets.forEach(s => {
-                const gKey = isCardio ? `${s.kg}_${s.u1 || '秒'}` : `${s.kg}`;
-                if (!groups[gKey]) groups[gKey] = [];
-                groups[gKey].push(s);
-            });
+            const isSuperset = act.exName.includes('超級組');
+            const displayTitle = isSuperset ? `<span style="color:var(--primary);">[${act.catName || '未分類'}]</span> ${act.exName}` : act.exName;
+            
+            let groupsHtml = '';
+            if (isSuperset) {
+                const setsHtml = act.sets.map((s, i) => {
+                    const subItemsHtml = s.superset.map((ss, j) => {
+                        const char = String.fromCharCode(65 + j);
+                        const name = ss.name || `動作 ${char}`;
+                        return `<div style="font-size:11px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:120px;">
+                            <span style="color:var(--text-sub);">${name}:</span>
+                            <span style="color:var(--text-main); font-weight:800;">${ss.kg}k×${ss.reps}</span>
+                        </div>`;
+                    }).join('');
 
-            const sortedKeys = Object.keys(groups).sort((a, b) => {
-                if (isCardio) {
-                    // Sort by unit (分 > 秒) then by value
-                    const [vA, uA] = a.split('_');
-                    const [vB, uB] = b.split('_');
-                    if (uA !== uB) return uA === '分' ? -1 : 1;
-                    return Number(vB) - Number(vA);
-                }
-                return Number(b) - Number(a);
-            });
-
-            const groupsHtml = sortedKeys.map(key => {
-                const groupSets = groups[key];
-                const first = groupSets[0];
-                const repsBadges = groupSets.map(s => {
-                    const u2 = s.u2 || (isCardio ? '秒' : '下');
-                    const label = `${s.reps}${u2}`;
-                    return `<div class="rep-badge" onclick="app.deleteSet('${act.exId}', '${s.id}', '${(act.note || '').replace(/'/g, "\\'")}')">${label}</div>`;
+                    return `<div style="background:rgba(255,255,255,0.05); border-radius:8px; padding:6px 10px; min-width:100px; border:1px solid rgba(255,255,255,0.05);">
+                        <div style="font-size:9px; color:var(--primary); font-weight:900; margin-bottom:2px; display:flex; justify-content:space-between;">
+                            <span>SET ${i + 1}</span>
+                        </div>
+                        ${subItemsHtml}
+                    </div>`;
                 }).join('');
 
-                const u1 = first.u1 || (isCardio ? '秒' : 'kg');
-                const weightLabel = isCardio ? `${first.kg}${u1}` : `${first.kg}kg`;
-                return `
-                <div class="weight-group-row">
-                    <div class="weight-group-label">${weightLabel}</div>
-                    <div class="weight-group-reps">${repsBadges}</div>
-                </div>`;
-            }).join('');
+                groupsHtml = `<div style="display:flex; flex-wrap:wrap; gap:6px; margin-top:8px;">${setsHtml}</div>`;
+            } else {
+                // Group sets by value and unit
+                const groups = {};
+                act.sets.forEach(s => {
+                    const gKey = isCardio ? `${s.kg}_${s.u1 || '秒'}` : `${s.kg}`;
+                    if (!groups[gKey]) groups[gKey] = [];
+                    groups[gKey].push(s);
+                });
+
+                const sortedKeys = Object.keys(groups).sort((a, b) => {
+                    if (isCardio) {
+                        const [vA, uA] = a.split('_');
+                        const [vB, uB] = b.split('_');
+                        if (uA !== uB) return uA === '分' ? -1 : 1;
+                        return Number(vB) - Number(vA);
+                    }
+                    return Number(b) - Number(a);
+                });
+
+                groupsHtml = sortedKeys.map(key => {
+                    const groupSets = groups[key];
+                    const first = groupSets[0];
+                    const repsBadges = groupSets.map(s => {
+                        const u2 = s.u2 || (isCardio ? '秒' : '下');
+                        const label = `${s.reps}${u2}`;
+                        return `<div class="rep-badge" onclick="app.deleteSet('${act.id}', '${s.id}')">${label}</div>`;
+                    }).join('');
+
+                    const u1 = first.u1 || (isCardio ? '秒' : 'kg');
+                    const weightLabel = isCardio ? `${first.kg}${u1}` : `${first.kg}kg`;
+                    return `
+                    <div class="weight-group-row">
+                        <div class="weight-group-label">${weightLabel}</div>
+                        <div class="weight-group-reps">${repsBadges}</div>
+                    </div>`;
+                }).join('');
+            }
 
             const photoHtml = act.photo ?
                 `<img src="${act.photo}" class="photo-preview-thumbnail" style="margin-top:8px;" onclick="app.viewPhotoFull('${act.photo}')">` : '';
@@ -235,10 +285,10 @@ const app = {
             return `
             <div class="action-item">
                 <div class="action-item-header">
-                    <span class="action-item-name">${act.exName} <span style="font-size:12px; color:var(--text-sub); font-weight:normal; opacity:0.8; margin-left:10px;">[${act.catName || '未分類'}]</span></span>
+                    <span class="action-item-name">${displayTitle}</span>
                     <div style="display:flex; gap:10px; align-items:center;">
-                        <button class="btn-outline-green" style="padding:5px 12px; font-size:13px;" onclick="app.openWorkout('${act.exId}', '${act.exName}', '${act.catName || ''}', '${(act.note || '').replace(/'/g, "\\'")}')">繼續</button>
-                        <span style="color:var(--danger); font-size:12px; cursor:pointer;" onclick="app.deleteActivity('${act.exId}', '${(act.note || '').replace(/'/g, "\\'")}')">刪除</span>
+                        <button class="btn-outline-green" style="padding:5px 12px; font-size:13px;" onclick="app.openWorkout('${act.exId}', '${this.esc(act.exName)}', '${this.esc(act.catName)}', '${act.id}')">繼續</button>
+                        <span style="color:var(--danger); font-size:12px; cursor:pointer;" onclick="app.deleteActivity('${act.id}')">刪除</span>
                     </div>
                 </div>
                 ${groupsHtml}
@@ -308,7 +358,7 @@ const app = {
     renderCatPicker() {
         const cats = store.getCategories();
         document.getElementById('picker-cat-list').innerHTML = cats.map(c => `
-            <div class="list-item" onclick="app.selectCategory('${c.id}', '${c.name}')">
+            <div class="list-item" onclick="app.selectCategory('${c.id}', '${this.esc(c.name)}')">
                 <span>${c.name}</span><span style="color:var(--text-sub);">›</span>
             </div>
         `).join('');
@@ -333,7 +383,7 @@ const app = {
     renderExList() {
         const exs = store.getExercises(this.state.currentCat.id);
         document.getElementById('picker-ex-list').innerHTML = exs.map(e => `
-            <div class="list-item" onclick="app.openWorkout('${e.id}', '${e.name}')">
+            <div class="list-item" onclick="app.openWorkout('${e.id}', '${this.esc(e.name)}')">
                 <span>${e.name}</span><span style="color:var(--primary); font-size:18px;">＋</span>
             </div>
         `).join('');
@@ -349,21 +399,47 @@ const app = {
     },
 
     // ─── WORKOUT (single page) ───────────────────────────────
-    openWorkout(exId, exName, catName = '', note = null) {
+    openWorkout(exId, exName, catName = '', actId = null) {
         this.state.currentEx = { id: exId, name: exName };
-        this.state.editingActivityNote = note; // 關鍵：如果是從繼續按鈕進來，note 不會是 null
-        document.getElementById('workout-title').innerText = exName;
-
+        this.state.editingActivityId = actId;
+        
         // Today's sets for this exercise
         const record = store.getDayRecord(this.state.viewDate);
-        // 只在有指定備註（編輯模式）時才抓取舊資料，否則（新增模式）一律為 null 確保介面清空
-        const act = note !== null ? record.activities.find(a => a.exId === exId && (a.note || '') === note) : null;
+        const act = actId ? record.activities.find(a => a.id === actId) : null;
 
-        // If we have an existing activity or a passed catName, sync the currentCat
+        // Superset detection
+        this.state.isSuperset = exName.includes('超級組');
+        
+        // Sync category
         if (catName) {
             this.state.currentCat = { id: '', name: catName };
         } else if (act && act.catName) {
             this.state.currentCat = { id: act.catId || '', name: act.catName };
+        }
+        
+        const catLabel = this.state.currentCat ? this.state.currentCat.name : '';
+        const displayTitle = this.state.isSuperset && catLabel ? `[${catLabel}] ${exName}` : exName;
+        document.getElementById('workout-title').innerText = displayTitle;
+
+        const superCtrl = document.getElementById('superset-controls');
+        const normalInputs = document.getElementById('normal-workout-inputs');
+        if (this.state.isSuperset) {
+            superCtrl.style.display = 'block';
+            normalInputs.style.display = 'none';
+            
+            if (act && act.supersetData) {
+                this.state.supersetData = JSON.parse(JSON.stringify(act.supersetData));
+            } else if (!act) {
+                // Only reset if it's a new entry and doesn't have local state yet
+                this.state.supersetData = [
+                    { name: '', kg: '', reps: 10 },
+                    { name: '', kg: '', reps: 10 }
+                ];
+            }
+            this.renderSupersetInputs();
+        } else {
+            superCtrl.style.display = 'none';
+            normalInputs.style.display = 'grid';
         }
 
         // Dynamic labels for Cardio vs Strength
@@ -411,6 +487,78 @@ const app = {
         }, 80);
     },
 
+    renderSupersetInputs() {
+        const container = document.getElementById('superset-cards-container');
+        if (!container) return;
+        
+        container.innerHTML = this.state.supersetData.map((data, idx) => {
+            const char = String.fromCharCode(65 + idx); // A, B, C...
+            return `
+            <div class="superset-card">
+                <div class="superset-card-header">
+                    <input type="text" class="superset-name-input" placeholder="動作 ${char} 名稱..." 
+                           value="${data.name || ''}" onchange="app.state.supersetData[${idx}].name = this.value">
+                    <div class="superset-tag">${char}</div>
+                    ${idx > 1 ? `<button class="btn-text" style="color:var(--danger); font-size:12px; margin-left:10px;" onclick="app.removeSupersetMove(${idx})">移除</button>` : ''}
+                </div>
+                <div class="superset-card-body" style="display:flex; gap:12px; align-items:flex-end;">
+                    <div class="input-box" style="flex:1;">
+                        <label>重量 (KG)</label>
+                        <input type="number" class="super-input-val" placeholder="0" inputmode="decimal" step="0.5"
+                               value="${data.kg || ''}" onchange="app.state.supersetData[${idx}].kg = this.value">
+                    </div>
+                    <div class="input-box clickable" style="flex:1;" onclick="app.openSuperRepsWheel(${idx})">
+                        <label>次數</label>
+                        <div id="super-reps-${idx}" class="super-display-val">${data.reps || 10}</div>
+                    </div>
+                </div>
+                <div class="quick-kg-row" style="margin-top:8px;">
+                    <button class="quick-kg-btn" onclick="app.quickAddSuperKg(${idx}, 1)">+1</button>
+                    <button class="quick-kg-btn" onclick="app.quickAddSuperKg(${idx}, 2.5)">+2.5</button>
+                    <button class="quick-kg-btn" onclick="app.quickAddSuperKg(${idx}, 5)">+5</button>
+                    <button class="quick-kg-btn" style="background:#333" onclick="app.quickAddSuperKg(${idx}, null)">清空</button>
+                </div>
+            </div>
+            ${idx < this.state.supersetData.length - 1 ? `<div style="display:flex; justify-content:center; margin: -12px 0;"><div style="width:2px; height:15px; background:var(--primary); opacity:0.5;"></div></div>` : ''}
+            `;
+        }).join('');
+    },
+
+    addSupersetMove() {
+        this.state.supersetData.push({ name: '', kg: '', reps: 10 });
+        this.renderSupersetInputs();
+    },
+
+    removeSupersetMove(idx) {
+        if (this.state.supersetData.length > 2) {
+            this.state.supersetData.splice(idx, 1);
+            this.renderSupersetInputs();
+        }
+    },
+
+    quickAddSuperKg(idx, val) {
+        const data = this.state.supersetData[idx];
+        if (val === null) {
+            data.kg = '';
+        } else {
+            data.kg = (parseFloat(data.kg || 0) + val).toString();
+        }
+        this.renderSupersetInputs();
+    },
+
+    updateSupersetNames() {
+        // Obsolete but kept for safety if called elsewhere
+    },
+
+    openSuperRepsWheel(idx) {
+        const current = parseInt(this.state.supersetData[idx].reps) || 10;
+        this.openWheel('選擇次數', 0, 100, 1, current, (val) => {
+            this.state.supersetData[idx].reps = val;
+            this.renderSupersetInputs();
+        });
+    },
+
+
     renderWorkoutLog(act) {
         const el = document.getElementById('workout-sets-list');
         if (!act || act.sets.length === 0) {
@@ -419,6 +567,30 @@ const app = {
             return;
         }
         el.className = '';
+        
+        const isSuperset = act.exName.includes('超級組');
+
+        if (isSuperset) {
+            const setsHtml = act.sets.map((s, i) => {
+                const subSetsHtml = s.superset.map((ss, j) => {
+                    const char = String.fromCharCode(65 + j);
+                    const name = ss.name || `動作 ${char}`;
+                    return `<div style="color:var(--text-sub); font-size:11px; margin-bottom:2px;">${name}: ${ss.kg}kg x ${ss.reps}</div>`;
+                }).join('');
+
+                return `
+                <div style="position:relative; background:rgba(255,255,255,0.05); border-radius:10px; padding:8px 12px; min-width:110px; border:1px solid rgba(255,255,255,0.05);">
+                    <div style="font-size:9px; color:var(--primary); font-weight:900; margin-bottom:4px; display:flex; justify-content:space-between; align-items:center;">
+                        <span>SET ${i + 1}</span>
+                        <span style="color:var(--danger); cursor:pointer; font-size:14px; padding:0 2px;" onclick="app.deleteSet('${act.id}', '${s.id}')">✕</span>
+                    </div>
+                    ${subSetsHtml}
+                </div>`;
+            }).join('');
+            el.innerHTML = `<div style="display:flex; flex-wrap:wrap; gap:8px;">${setsHtml}</div>`;
+            return;
+        }
+
         // Group by value and unit
         const groups = {};
         const isCardio = act.catName === '有氧';
@@ -444,7 +616,7 @@ const app = {
             const u1 = firstSet.u1 || (isCardio ? '秒' : 'kg');
             const repsStr = groupSets.map(s => {
                 const u2 = s.u2 || (isCardio ? '秒' : '下');
-                return `<span class="workout-log-set" onclick="app.deleteSet('${act.exId}', '${s.id}', '${(act.note || '').replace(/'/g, "\\'")}')">${s.reps}${u2}</span>`;
+                return `<span class="workout-log-set" onclick="app.deleteSet('${act.id}', '${s.id}')">${s.reps}${u2}</span>`;
             }).join(' · ');
             return `<div style="display:flex; gap:10px; font-size:13px; margin-bottom:4px;">
                 <span style="color:var(--primary); font-weight:800; min-width:60px;">${firstSet.kg}${u1}</span>
@@ -463,21 +635,25 @@ const app = {
         const kgRaw = isCardio ? this.state.trainValue : document.getElementById('input-kg').value;
         kg = parseFloat(kgRaw);
 
-        // 如果點擊「結束動作」且數值為 0 或空白，直接視為取消並關閉
-        if (isFinished && (kgRaw === '' || isNaN(kg) || kg <= 0)) {
-            if (this.state.currentEx) {
-                let record = store.getDayRecord(this.state.viewDate);
-                // 優先使用 editingActivityNote 鎖定對象
-                let searchNote = this.state.editingActivityNote !== null ? this.state.editingActivityNote : note;
-                let act = record.activities.find(a => a.exId === this.state.currentEx.id && (a.note || '') === searchNote);
-                if (act) {
-                    act.note = note;
-                    store.saveDayRecord(this.state.viewDate, record);
+        // 如果是超級組，跳過針對單一動作的 0 值檢查
+        if (!this.state.isSuperset) {
+            // 如果點擊「結束動作」且數值為 0 或空白，直接視為取消並關閉
+            if (isFinished && (kgRaw === '' || isNaN(kg) || kg <= 0)) {
+                if (this.state.currentEx) {
+                    let record = store.getDayRecord(this.state.viewDate);
+                    let act = this.state.editingActivityId ? 
+                        record.activities.find(a => a.id === this.state.editingActivityId) :
+                        record.activities.find(a => a.exId === this.state.currentEx.id && (a.note || '') === note);
+
+                    if (act) {
+                        act.note = note;
+                        store.saveDayRecord(this.state.viewDate, record);
+                    }
                 }
+                this.state.editingActivityId = null;
+                this.closeSubView();
+                return;
             }
-            this.state.editingActivityNote = null;
-            this.closeSubView();
-            return;
         }
 
         if (isCardio) {
@@ -486,12 +662,14 @@ const app = {
             u1 = this.state.trainUnit;
             u2 = this.state.restUnit;
         } else {
-            if (kgRaw === '' || isNaN(kg) || kg < 0) {
-                const input = document.getElementById('input-kg');
-                input.style.color = '#ef4444';
-                input.focus();
-                setTimeout(() => input.style.color = '', 600);
-                return;
+            if (!this.state.isSuperset) {
+                if (kgRaw === '' || isNaN(kg) || kg < 0) {
+                    const input = document.getElementById('input-kg');
+                    input.style.color = '#ef4444';
+                    input.focus();
+                    setTimeout(() => input.style.color = '', 600);
+                    return;
+                }
             }
             reps = this.state.repsValue;
             u1 = 'kg';
@@ -500,21 +678,21 @@ const app = {
         let record = store.getDayRecord(this.state.viewDate);
 
         let act;
-        if (this.state.editingActivityNote !== null) {
-            // 【編輯模式】：直接更新原區塊備註，不分裂
-            act = record.activities.find(a => a.exId === this.state.currentEx.id && (a.note || '') === this.state.editingActivityNote);
+        if (this.state.editingActivityId) {
+            // 【編輯模式】：使用 ID 鎖定對象
+            act = record.activities.find(a => a.id === this.state.editingActivityId);
             if (act) {
                 act.note = note;
                 act.photo = this.state.currentPhoto;
-                this.state.editingActivityNote = note; // 更新追蹤值，以防連續輸入
             }
         } else {
-            // 【新增模式】：若備註不同則自動分流
+            // 【新增模式】：若備註相同則自動分流（或合併）
             act = record.activities.find(a => a.exId === this.state.currentEx.id && (a.note || '') === note);
         }
 
         if (!act) {
             act = {
+                id: 'act-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9),
                 catId: this.state.currentCat ? this.state.currentCat.id : '',
                 catName: this.state.currentCat ? this.state.currentCat.name : '',
                 exId: this.state.currentEx.id,
@@ -523,14 +701,34 @@ const app = {
                 photo: this.state.currentPhoto,
                 sets: []
             };
+            if (this.state.isSuperset) act.supersetData = JSON.parse(JSON.stringify(this.state.supersetData));
             record.activities.push(act);
         }
 
-        act.sets.push({ id: Date.now().toString() + Math.random(), kg, reps, u1, u2 });
+        if (this.state.isSuperset) {
+            const compositeSuperset = this.state.supersetData.map(data => ({
+                name: data.name,
+                kg: data.kg || 0,
+                reps: data.reps || 0
+            }));
+
+            // For superset, we store a composite set
+            act.sets.push({
+                id: Date.now().toString() + Math.random(),
+                kg: compositeSuperset[0].kg, 
+                reps: compositeSuperset[0].reps,
+                u1: 'kg', u2: '下',
+                superset: compositeSuperset
+            });
+            // Update activity-level superset names/data
+            act.supersetData = JSON.parse(JSON.stringify(this.state.supersetData));
+        } else {
+            act.sets.push({ id: Date.now().toString() + Math.random(), kg, reps, u1, u2 });
+        }
         store.saveDayRecord(this.state.viewDate, record);
 
         if (isFinished) {
-            this.state.editingActivityNote = null;
+            this.state.editingActivityId = null;
             this.closeSubView();
         } else {
             this.renderWorkoutLog(act);
@@ -546,30 +744,29 @@ const app = {
         }
     },
 
-    deleteSet(exId, setId, note = '') {
+    deleteSet(actId, setId) {
         if (!confirm('刪除此組紀錄？')) return;
         let record = store.getDayRecord(this.state.viewDate);
-        const act = record.activities.find(a => a.exId === exId && (a.note || '') === note);
+        const act = record.activities.find(a => a.id === actId);
         if (act) {
             act.sets = act.sets.filter(s => s.id !== setId);
             if (act.sets.length === 0) {
-                record.activities = record.activities.filter(a => a !== act);
+                record.activities = record.activities.filter(a => a.id !== actId);
             }
             store.saveDayRecord(this.state.viewDate, record);
             this.renderRecordView();
 
             // 如果當前正在編輯這個動作，也要同步更新子視圖的顯示
-            if (this.state.currentEx && this.state.currentEx.id === exId) {
-                const updatedAct = record.activities.find(a => a.exId === exId);
-                this.renderWorkoutLog(updatedAct);
+            if (this.state.currentEx && this.state.editingActivityId === actId) {
+                this.renderWorkoutLog(act);
             }
         }
     },
 
-    deleteActivity(exId, note = '') {
+    deleteActivity(id) {
         if (!confirm('確定刪除此動作的所有組數？')) return;
         let record = store.getDayRecord(this.state.viewDate);
-        record.activities = record.activities.filter(a => !(a.exId === exId && (a.note || '') === note));
+        record.activities = record.activities.filter(a => a.id !== id);
         store.saveDayRecord(this.state.viewDate, record);
         this.renderRecordView();
     },
@@ -745,7 +942,7 @@ const app = {
 
         document.getElementById('calendar-month-label').innerText = `${mainYear}年${mainMonth + 1}月`;
 
-        for (let i = 0; i < 35; i++) {
+        for (let i = 0; i < 42; i++) {
             const d = new Date(baseMonday.getFullYear(), baseMonday.getMonth(), baseMonday.getDate() + i);
             const isToday = this.isToday(d);
             const record = store.getDayRecord(d);
@@ -767,7 +964,8 @@ const app = {
                 <div class="day-num">${d.getDate()}</div>
                 ${tagsHtml}
             `;
-            cell.onclick = () => {
+            cell.onclick = (e) => {
+                e.stopPropagation();
                 document.querySelectorAll('.day-cell.selected').forEach(c => c.classList.remove('selected'));
                 cell.classList.add('selected');
                 this.showDayDetail(d);
@@ -835,40 +1033,59 @@ const app = {
 
         const exDetailsHtml = record.activities.map(act => {
             const isCardio = act.catName === '有氧';
-            const groups = {};
-            act.sets.forEach(s => {
-                const gKey = isCardio ? `${s.kg}_${s.u1 || '秒'}` : `${s.kg}`;
-                if (!groups[gKey]) groups[gKey] = [];
-                groups[gKey].push(s);
-            });
+            const isSuperset = act.exName.includes('超級組');
+            const displayTitle = isSuperset ? `<span style="color:var(--primary);">[${act.catName || '未分類'}]</span> ${act.exName}` : act.exName;
 
-            const sortedKeys = Object.keys(groups).sort((a, b) => {
-                if (isCardio) {
-                    const [vA, uA] = a.split('_');
-                    const [vB, uB] = b.split('_');
-                    if (uA !== uB) return uA === '分' ? -1 : 1;
-                    return Number(vB) - Number(vA);
-                }
-                return Number(b) - Number(a);
-            });
+            let rowsHtml = '';
+            if (isSuperset) {
+                rowsHtml = act.sets.map((s, i) => {
+                    const subSetsHtml = s.superset.map((ss, j) => {
+                        const char = String.fromCharCode(65 + j);
+                        const name = ss.name || `動作 ${char}`;
+                        return `<div style="font-size:11px; margin-bottom:1px;">${name}: ${ss.kg}kg x ${ss.reps}</div>`;
+                    }).join('');
+                    return `<div style="padding:6px 8px; background:rgba(255,255,255,0.04); border-radius:8px; min-width:100px;">
+                        <div style="font-size:9px; color:var(--primary); font-weight:900; margin-bottom:2px;">SET ${i + 1}</div>
+                        ${subSetsHtml}
+                    </div>`;
+                }).join('');
+                rowsHtml = `<div style="display:flex; flex-wrap:wrap; gap:6px;">${rowsHtml}</div>`;
+            } else {
+                const groups = {};
+                act.sets.forEach(s => {
+                    const gKey = isCardio ? `${s.kg}_${s.u1 || '秒'}` : `${s.kg}`;
+                    if (!groups[gKey]) groups[gKey] = [];
+                    groups[gKey].push(s);
+                });
 
-            const rowsHtml = sortedKeys.map(key => {
-                const groupSets = groups[key];
-                const first = groupSets[0];
-                const u1 = first.u1 || (isCardio ? '秒' : 'kg');
-                const u2 = first.u2 || (isCardio ? '秒' : '下');
-                const pills = groupSets.map(s => `<span class="detail-rep-pill">${s.reps}${s.u2 || u2}</span>`).join('');
-                return `<div class="detail-weight-row">
-                    <span class="detail-weight-label">${first.kg}${u1}</span>
-                    <div style="display:flex; flex-wrap:wrap; gap:4px;">${pills}</div>
-                </div>`;
-            }).join('');
+                const sortedKeys = Object.keys(groups).sort((a, b) => {
+                    if (isCardio) {
+                        const [vA, uA] = a.split('_');
+                        const [vB, uB] = b.split('_');
+                        if (uA !== uB) return uA === '分' ? -1 : 1;
+                        return Number(vB) - Number(vA);
+                    }
+                    return Number(b) - Number(a);
+                });
+
+                rowsHtml = sortedKeys.map(key => {
+                    const groupSets = groups[key];
+                    const first = groupSets[0];
+                    const u1 = first.u1 || (isCardio ? '秒' : 'kg');
+                    const u2 = first.u2 || (isCardio ? '秒' : '下');
+                    const pills = groupSets.map(s => `<span class="detail-rep-pill">${s.reps}${s.u2 || u2}</span>`).join('');
+                    return `<div class="detail-weight-row">
+                        <span class="detail-weight-label">${first.kg}${u1}</span>
+                        <div style="display:flex; flex-wrap:wrap; gap:4px;">${pills}</div>
+                    </div>`;
+                }).join('');
+            }
 
             const photoThumbnail = act.photo ?
                 `<img src="${act.photo}" class="photo-preview-thumbnail" style="margin-top:8px;" onclick="app.viewPhotoFull('${act.photo}')">` : '';
 
             return `<div class="detail-ex-row" style="margin-bottom:12px;">
-                <div class="detail-ex-name">${act.exName}</div>
+                <div class="detail-ex-name">${displayTitle}</div>
                 ${rowsHtml}
                 ${act.note ? `<div style="font-size:10px; color:var(--text-sub); margin-top:4px;">📝 ${act.note}</div>` : ''}
                 ${photoThumbnail}
@@ -918,9 +1135,16 @@ const app = {
         const d = this.state.detailDate;
         if (!d) return;
         const next = new Date(d.getFullYear(), d.getMonth(), d.getDate() + delta);
+        
+        // Sync calendar selection
         document.querySelectorAll('.day-cell.selected').forEach(c => c.classList.remove('selected'));
         const cell = document.querySelector(`.day-cell[data-time="${next.getTime()}"]`);
-        if (cell) cell.classList.add('selected');
+        if (cell) {
+            cell.classList.add('selected');
+        } else {
+            // If the day is not in current view, we might need to change month
+            // But for now just show detail
+        }
         this.showDayDetail(next);
     },
 
@@ -1591,20 +1815,36 @@ const app = {
     },
 
     initTimePickerCustom() {
+        const REPEAT = 20; // 重複次數以支援循環
         const hourInner = document.getElementById('wheel-hour-inner');
         let hourHtml = '';
-        for (let i = 1; i <= 12; i++) hourHtml += `<div class="wheel-item" data-val="${i}">${i}</div>`;
+        for (let r = 0; r < REPEAT; r++) {
+            for (let i = 1; i <= 12; i++) hourHtml += `<div class="wheel-item" data-val="${i}">${i}</div>`;
+        }
         if (hourInner) hourInner.innerHTML = hourHtml;
 
         const minuteInner = document.getElementById('wheel-minute-inner');
         let minuteHtml = '';
-        for (let i = 0; i < 60; i++) minuteHtml += `<div class="wheel-item" data-val="${i}">${String(i).padStart(2, '0')}</div>`;
+        for (let r = 0; r < REPEAT; r++) {
+            for (let i = 0; i < 60; i++) minuteHtml += `<div class="wheel-item" data-val="${i}">${String(i).padStart(2, '0')}</div>`;
+        }
         if (minuteInner) minuteInner.innerHTML = minuteHtml;
 
         ['ampm', 'hour', 'minute'].forEach(id => {
             const scroller = document.getElementById(`wheel-${id}`);
             if (scroller) {
                 scroller.addEventListener('scroll', () => {
+                    // 循環跳轉邏輯
+                    if (id !== 'ampm') {
+                        const count = id === 'hour' ? 12 : 60;
+                        const itemH = 40;
+                        const groupH = count * itemH;
+                        if (scroller.scrollTop < groupH * 2) {
+                            scroller.scrollTop += groupH * 10;
+                        } else if (scroller.scrollTop > groupH * 15) {
+                            scroller.scrollTop -= groupH * 10;
+                        }
+                    }
                     clearTimeout(this.state[`${id}ScrollTimeout`]);
                     this.state[`${id}ScrollTimeout`] = setTimeout(() => this.handleCustomWheelScroll(id), 50);
                 });
@@ -1630,7 +1870,11 @@ const app = {
     setScrollerToValue(id, index) {
         const scroller = document.getElementById(`wheel-${id}`);
         if (scroller) {
-            scroller.scrollTop = index * 40;
+            const itemH = 40;
+            let finalIndex = index;
+            if (id === 'hour') finalIndex = index + (12 * 10); // 跳到中間的循環
+            if (id === 'minute') finalIndex = index + (60 * 10);
+            scroller.scrollTop = finalIndex * itemH;
             this.handleCustomWheelScroll(id);
         }
     },
