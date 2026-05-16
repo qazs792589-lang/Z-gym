@@ -150,7 +150,11 @@ const app = {
             const isCardio = a.catName === '有氧';
             sets += a.sets.length;
             if (!isCardio) {
-                a.sets.forEach(s => kg += s.kg * s.reps);
+                a.sets.forEach(s => {
+                    const k = parseFloat(s.kg) || 0;
+                    const r = parseFloat(s.reps) || 0;
+                    kg += k * r;
+                });
             }
         });
         document.getElementById('stat-actions').innerText = record.activities.length;
@@ -504,7 +508,7 @@ const app = {
                 <div class="superset-card-body" style="display:flex; gap:12px; align-items:flex-end;">
                     <div class="input-box" style="flex:1;">
                         <label>重量 (KG)</label>
-                        <input type="number" class="super-input-val" placeholder="0" inputmode="decimal" step="0.5"
+                        <input type="text" class="super-input-val" placeholder="0" inputmode="decimal"
                                value="${data.kg || ''}" onchange="app.state.supersetData[${idx}].kg = this.value">
                     </div>
                     <div class="input-box clickable" style="flex:1;" onclick="app.openSuperRepsWheel(${idx})">
@@ -637,8 +641,8 @@ const app = {
 
         // 如果是超級組，跳過針對單一動作的 0 值檢查
         if (!this.state.isSuperset) {
-            // 如果點擊「結束動作」且數值為 0 或空白，直接視為取消並關閉
-            if (isFinished && (kgRaw === '' || isNaN(kg) || kg <= 0)) {
+            // 如果點擊「結束動作」且內容為空，直接視為取消並關閉
+            if (isFinished && kgRaw === '') {
                 if (this.state.currentEx) {
                     let record = store.getDayRecord(this.state.viewDate);
                     let act = this.state.editingActivityId ? 
@@ -663,7 +667,7 @@ const app = {
             u2 = this.state.restUnit;
         } else {
             if (!this.state.isSuperset) {
-                if (kgRaw === '' || isNaN(kg) || kg < 0) {
+                if (kgRaw === '') {
                     const input = document.getElementById('input-kg');
                     input.style.color = '#ef4444';
                     input.focus();
