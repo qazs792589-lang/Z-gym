@@ -276,7 +276,7 @@ body {
 }
 
 .day-cell.today .day-num {
-    color: var(--primary) !important;
+    color: rgba(163, 230, 53, 0.65) !important;
     font-weight: 900;
 }
 
@@ -355,7 +355,7 @@ body {
 }
 
 .day-cell.today .day-num {
-    color: var(--primary) !important;
+    color: rgba(163, 230, 53, 0.65) !important;
     font-weight: 900;
 }
 
@@ -925,18 +925,18 @@ body {
 
 /* 有資料的日期稍微亮一點點 */
 .day-cell.today {
-    background: var(--primary) !important;
-    box-shadow: 0 4px 15px rgba(163, 230, 53, 0.3);
+    background: rgba(163, 230, 53, 0.3) !important;
+    box-shadow: 0 4px 15px rgba(163, 230, 53, 0.1);
 }
 
 .day-cell.today .day-num {
-    color: #000 !important;
+    color: var(--text-main) !important;
     font-weight: 900;
 }
 
 .day-cell.today .day-tag {
-    background: rgba(0, 0, 0, 0.1) !important;
-    color: #000 !important;
+    background: rgba(163, 230, 53, 0.2) !important;
+    color: var(--primary) !important;
 }
 
 /* 選取狀態改用外發光，不佔空間 */

@@ -1227,13 +1227,15 @@ const app = {
         const sunday = new Date(monday.getFullYear(), monday.getMonth(), monday.getDate() + 6);
         const weekRangeStr = `${monday.getMonth() + 1}/${monday.getDate()}-${sunday.getMonth() + 1}/${sunday.getDate()}`;
 
-        const labels = document.querySelectorAll('#view-history .stat-label');
-        if (labels.length >= 4) {
-            labels[0].innerText = `${weekRangeStr} 天數`;
-            labels[1].innerText = `${weekRangeStr} 分鐘`;
-            labels[2].innerText = `${mainMonth + 1}月 天數`;
-            labels[3].innerText = `${mainMonth + 1}月 分鐘`;
-        }
+        const histWeekLabel = document.getElementById('hist-week-label');
+        const histWeekTimeLabel = document.getElementById('hist-week-time-label');
+        const histMonthLabel = document.getElementById('hist-month-label');
+        const histMonthTimeLabel = document.getElementById('hist-month-time-label');
+
+        if (histWeekLabel) histWeekLabel.innerText = weekRangeStr;
+        if (histWeekTimeLabel) histWeekTimeLabel.innerText = weekRangeStr;
+        if (histMonthLabel) histMonthLabel.innerText = `${mainMonth + 1}月`;
+        if (histMonthTimeLabel) histMonthTimeLabel.innerText = `${mainMonth + 1}月`;
     },
 
     // ─── SUMMARY ─────────────────────────────────────────────

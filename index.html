@@ -186,14 +186,22 @@
                         style="font-size:10px; color:#666; font-weight:700; text-transform:uppercase; letter-spacing:.05em; margin-bottom:10px;">
                         訓練統計</div>
                     <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
-                        <div class="stat-box"><span class="highlight stat-val" id="hist-week-days">0</span><span
-                                class="stat-label">本週天數</span></div>
-                        <div class="stat-box"><span class="highlight stat-val" id="hist-week-time">0</span><span
-                                class="stat-label">本週分鐘</span></div>
-                        <div class="stat-box"><span class="highlight stat-val" id="hist-month-days">0</span><span
-                                class="stat-label">本月天數</span></div>
-                        <div class="stat-box"><span class="highlight stat-val" id="hist-month-time">0</span><span
-                                class="stat-label">本月分鐘</span></div>
+                        <div class="stat-box">
+                            <div><span class="highlight stat-val" id="hist-week-days">0</span> <span style="font-size:11px; color:var(--text-sub);">天數</span></div>
+                            <span class="stat-label" id="hist-week-label">本週</span>
+                        </div>
+                        <div class="stat-box">
+                            <div><span class="highlight stat-val" id="hist-week-time">0</span> <span style="font-size:11px; color:var(--text-sub);">分鐘</span></div>
+                            <span class="stat-label" id="hist-week-time-label">本週</span>
+                        </div>
+                        <div class="stat-box">
+                            <div><span class="highlight stat-val" id="hist-month-days">0</span> <span style="font-size:11px; color:var(--text-sub);">天數</span></div>
+                            <span class="stat-label" id="hist-month-label">本月</span>
+                        </div>
+                        <div class="stat-box">
+                            <div><span class="highlight stat-val" id="hist-month-time">0</span> <span style="font-size:11px; color:var(--text-sub);">分鐘</span></div>
+                            <span class="stat-label" id="hist-month-time-label">本月</span>
+                        </div>
                     </div>
                 </div>
                 <!-- Day detail on right (scrollable) -->
