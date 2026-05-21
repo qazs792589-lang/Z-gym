@@ -1614,15 +1614,31 @@ const app = {
                 tooltip.style.right = 'auto';
             }
             tooltip.style.top = '10px';
+
+            const hoverLine = svg.querySelector('#chart-hover-line');
+            if (hoverLine) {
+                hoverLine.setAttribute('x1', tx);
+                hoverLine.setAttribute('x2', tx);
+                hoverLine.setAttribute('opacity', '0.5');
+            }
+        };
+
+        const hideTooltip = () => {
+            tooltip.style.display = 'none';
+            const hoverLine = svg.querySelector('#chart-hover-line');
+            if (hoverLine) hoverLine.setAttribute('opacity', '0');
         };
 
         svg.addEventListener('mousemove', handleMove);
         svg.addEventListener('touchstart', (e) => {
             handleMove(e);
-        }, { passive: false });
+        }, { passive: true });
+        svg.addEventListener('touchmove', (e) => {
+            handleMove(e);
+        }, { passive: true });
 
-        svg.addEventListener('mouseleave', () => tooltip.style.display = 'none');
-        svg.addEventListener('touchend', () => tooltip.style.display = 'none');
+        svg.addEventListener('mouseleave', hideTooltip);
+        svg.addEventListener('touchend', hideTooltip);
     },
 
     deleteBodyRecord(index) {
