@@ -158,7 +158,12 @@
                 <div class="calendar-card">
                     <!-- Month header + nav -->
                     <div class="calendar-header">
-                        <span id="calendar-month-label">2026年4月</span>
+                        <div style="display:flex; align-items:center; gap:12px;">
+                            <span id="calendar-month-label">2026年4月</span>
+                            <button id="btn-return-today" onclick="app.returnToToday()" style="background:var(--primary-glow); color:var(--primary); border:1px solid var(--primary); padding:4px 10px; border-radius:12px; font-size:12px; font-weight:700; cursor:pointer; display:none; transition:opacity 0.2s;">
+                                回到今日
+                            </button>
+                        </div>
                         <div class="month-selector">
                             <button onclick="app.changeWeeks(-4)">&lt;</button>
                             <button onclick="app.changeWeeks(4)">&gt;</button>
@@ -191,7 +196,7 @@
                             <span class="stat-label" id="hist-week-label">本週</span>
                         </div>
                         <div class="stat-box">
-                            <div><span class="highlight stat-val" id="hist-week-time">0</span> <span style="font-size:11px; color:var(--text-sub);">分鐘</span></div>
+                            <div><span class="highlight stat-val" id="hist-week-time">0</span> <span style="font-size:11px; color:var(--text-sub);">分</span></div>
                             <span class="stat-label" id="hist-week-time-label">本週</span>
                         </div>
                         <div class="stat-box">
@@ -199,7 +204,7 @@
                             <span class="stat-label" id="hist-month-label">本月</span>
                         </div>
                         <div class="stat-box">
-                            <div><span class="highlight stat-val" id="hist-month-time">0</span> <span style="font-size:11px; color:var(--text-sub);">分鐘</span></div>
+                            <div><span class="highlight stat-val" id="hist-month-time">0</span> <span style="font-size:11px; color:var(--text-sub);">分</span></div>
                             <span class="stat-label" id="hist-month-time-label">本月</span>
                         </div>
                     </div>

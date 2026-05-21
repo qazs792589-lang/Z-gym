@@ -1010,11 +1010,13 @@ const app = {
         } else {
             document.getElementById('day-detail-content').className = 'detail-empty';
             document.getElementById('day-detail-content').innerHTML = '<span style="font-size:18px;">📅</span><span style="font-size:12px;">點選日期查看</span>';
+            this.updateReturnToTodayBtn(null);
         }
     },
 
     showDayDetail(d) {
         this.state.detailDate = d;
+        this.updateReturnToTodayBtn(d);
         this.updateHistoryStats(d);
         const record = store.getDayRecord(d);
         const panel = document.getElementById('day-detail-content');
@@ -1182,6 +1184,25 @@ const app = {
     },
 
     changeWeeks(delta) { this.state.weeksOffset += delta; this.renderHistoryView(); },
+
+    returnToToday() {
+        this.state.weeksOffset = 0;
+        this.renderHistoryView();
+    },
+
+    updateReturnToTodayBtn(d) {
+        const btn = document.getElementById('btn-return-today');
+        if (!btn) return;
+        const today = new Date();
+        const isToday = d && (d.getFullYear() === today.getFullYear() && d.getMonth() === today.getMonth() && d.getDate() === today.getDate());
+        
+        // Show if we are looking at a different week/month OR if a different day is selected
+        if ((isToday && this.state.weeksOffset === 0) || (!d && this.state.weeksOffset === 0)) {
+            btn.style.display = 'none';
+        } else {
+            btn.style.display = 'block';
+        }
+    },
 
     updateHistoryStats(refDate) {
         const date = refDate || new Date();
@@ -1528,6 +1549,9 @@ const app = {
                         <circle cx="${getX(i)}" cy="${getY(muscles[i], rangeR)}" r="2.5" fill="#8b5cf6" stroke="#000" stroke-width="0.5"></circle>
                     </g>
                 `).join('')}
+
+                <!-- 交互輔助線 (一開始隱藏) -->
+                <line id="chart-hover-line" y1="${padT}" y2="${h - padB}" stroke="#888" stroke-width="1" opacity="0" pointer-events="none" />
 
                 <!-- 單位標示 -->
                 <rect x="5" y="${padT - 25}" width="24" height="15" rx="3" fill="#000" fill-opacity="0.5" />
