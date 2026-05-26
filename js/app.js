@@ -1242,7 +1242,7 @@ const app = {
         document.getElementById('hist-week-days').innerText = wd;
         document.getElementById('hist-week-time').innerText = Math.round(wt);
         document.getElementById('hist-month-days').innerText = md;
-        document.getElementById('hist-month-time').innerText = Math.round(mt);
+        document.getElementById('hist-month-time').innerText = (mt / 60).toFixed(1);
 
         // 更新標籤讓使用者知道看的是哪一週/月
         const sunday = new Date(monday.getFullYear(), monday.getMonth(), monday.getDate() + 6);
