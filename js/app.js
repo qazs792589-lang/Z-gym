@@ -77,7 +77,14 @@ const app = {
 
         if (tabId === 'view-record') this.renderRecordView();
         if (tabId === 'view-history') this.renderHistoryView();
-        if (tabId === 'view-summary') this.generateSummary('today');
+        if (tabId === 'view-summary') {
+            const todayStr = new Date().toISOString().split('T')[0];
+            const sEl = document.getElementById('sum-start-date');
+            const eEl = document.getElementById('sum-end-date');
+            if (sEl && !sEl.value) sEl.value = todayStr;
+            if (eEl && !eEl.value) eEl.value = todayStr;
+            this.generateSummary('today');
+        }
         if (tabId === 'view-settings') this.renderSettingsView();
     },
 
@@ -1261,41 +1268,126 @@ const app = {
 
     // ─── SUMMARY ─────────────────────────────────────────────
     generateSummary(range) {
-        ['today', 'week', 'month'].forEach(r => {
+        ['today', 'yesterday', 'week', 'last-week', 'month', 'last-month', 'custom'].forEach(r => {
             const btn = document.getElementById(`btn-sum-${r}`);
             if (!btn) return;
             btn.className = r === range ? 'btn-full-green' : 'btn-outline-green w-100';
         });
         const today = new Date();
+        today.setHours(0, 0, 0, 0);
         const st = store.getSettings();
-        const days = range === 'today' ? 1 : (range === 'week' ? 7 : 30);
-        let text = `【Fit Log - ${range === 'today' ? '今日' : range === 'week' ? '本週' : '本月'}訓練摘要】\n`;
+
+        let startDate, endDate;
+        let rangeName = '';
 
         if (range === 'today') {
+            startDate = new Date(today);
+            endDate = new Date(today);
+            rangeName = '今日';
+        } else if (range === 'yesterday') {
+            const yest = new Date(today);
+            yest.setDate(today.getDate() - 1);
+            startDate = yest;
+            endDate = yest;
+            rangeName = '昨日';
+        } else if (range === 'week') {
+            const day = today.getDay();
+            const diff = today.getDate() - day + (day === 0 ? -6 : 1);
+            startDate = new Date(today.setDate(diff));
+            endDate = new Date(startDate);
+            endDate.setDate(startDate.getDate() + 6);
+            rangeName = '本週';
+        } else if (range === 'last-week') {
+            const day = today.getDay();
+            const diff = today.getDate() - day + (day === 0 ? -6 : 1) - 7;
+            startDate = new Date(today.setDate(diff));
+            endDate = new Date(startDate);
+            endDate.setDate(startDate.getDate() + 6);
+            rangeName = '上週';
+        } else if (range === 'month') {
+            startDate = new Date(today.getFullYear(), today.getMonth(), 1);
+            endDate = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+            rangeName = '本月';
+        } else if (range === 'last-month') {
+            startDate = new Date(today.getFullYear(), today.getMonth() - 1, 1);
+            endDate = new Date(today.getFullYear(), today.getMonth(), 0);
+            rangeName = '上月';
+        } else if (range === 'custom') {
+            const sVal = document.getElementById('sum-start-date').value;
+            const eVal = document.getElementById('sum-end-date').value;
+            if (!sVal || !eVal) {
+                alert('請選擇自訂的開始與結束日期！');
+                return;
+            }
+            startDate = new Date(sVal);
+            endDate = new Date(eVal);
+            startDate.setHours(0, 0, 0, 0);
+            endDate.setHours(0, 0, 0, 0);
+            rangeName = `${sVal}~${eVal}`;
+        }
+
+        let text = `【Fit Log - ${rangeName}訓練摘要】\n`;
+
+        const isSingleDay = startDate.getTime() === endDate.getTime();
+        if (isSingleDay) {
             text += `⚖️ 身體數據：${st.weight}kg / 體脂 ${st.fat}% / 肌肉 ${st.muscle}${st.muscleUnit || 'kg'}\n`;
         }
 
         let totalVol = 0;
-        for (let i = 0; i < days; i++) {
-            const d = new Date(today.getFullYear(), today.getMonth(), today.getDate() - i);
+        let days = [];
+        let cur = new Date(startDate);
+        while (cur <= endDate) {
+            days.push(new Date(cur));
+            cur.setDate(cur.getDate() + 1);
+        }
+        days.reverse();
+
+        days.forEach(d => {
             const r = store.getDayRecord(d);
             if (r.activities.length > 0) {
                 text += `\n📅 ${d.getMonth() + 1}/${d.getDate()} (${r.feeling}) ${r.duration}分\n`;
                 text += `類型: ${(r.types || []).join(', ') || '未設定'}\n`;
                 r.activities.forEach(a => {
                     const isCardio = a.catName === '有氧';
-                    const vol = isCardio ? 0 : a.sets.reduce((s, x) => s + x.kg * x.reps, 0);
+                    const isSuperset = a.exName.includes('超級組');
+                    let vol = 0;
+                    if (!isCardio) {
+                        if (isSuperset) {
+                            a.sets.forEach(s => {
+                                if (s.superset && s.superset.length) {
+                                    s.superset.forEach(ss => {
+                                        vol += (parseFloat(ss.kg) || 0) * (parseInt(ss.reps) || 0);
+                                    });
+                                }
+                            });
+                        } else {
+                            vol = a.sets.reduce((s, x) => s + (parseFloat(x.kg) || 0) * (parseInt(x.reps) || 0), 0);
+                        }
+                    }
                     totalVol += vol;
+                    
                     const summaryLine = isCardio ? `• ${a.exName}: ${a.sets.length}組\n` : `• ${a.exName}: ${a.sets.length}組 / 容量${vol}kg\n`;
                     text += summaryLine;
                     if (a.note) text += `   備註: ${a.note}\n`;
-                    a.sets.forEach((s, i) => {
-                        const setDetail = isCardio ? `${s.kg}秒訓練 / ${s.reps}秒休息` : `${s.kg}kg × ${s.reps}下`;
-                        text += `   ${i + 1}. ${setDetail}${s.note ? ` (${s.note})` : ''}\n`;
-                    });
+                    
+                    if (isSuperset) {
+                        a.sets.forEach((s, i) => {
+                            const subSetsStr = s.superset.map((ss, j) => {
+                                const char = String.fromCharCode(65 + j);
+                                const name = ss.name || `動作 ${char}`;
+                                return `${name}: ${ss.kg}kg x ${ss.reps}`;
+                            }).join(' + ');
+                            text += `   ${i + 1}. 超級組 (${subSetsStr})\n`;
+                        });
+                    } else {
+                        a.sets.forEach((s, i) => {
+                            const setDetail = isCardio ? `${s.kg}秒訓練 / ${s.reps}秒休息` : `${s.kg}kg × ${s.reps}下`;
+                            text += `   ${i + 1}. ${setDetail}${s.note ? ` (${s.note})` : ''}\n`;
+                        });
+                    }
                 });
             }
-        }
+        });
         text += `\n══════════\n總訓練容量: ${totalVol} kg`;
         document.getElementById('ai-summary-text').innerText = text;
     },

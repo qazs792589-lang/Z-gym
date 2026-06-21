@@ -228,10 +228,26 @@
                 <div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:10px; margin-bottom:16px;">
                     <button class="btn-outline-green w-100" id="btn-sum-today"
                         onclick="app.generateSummary('today')">今日</button>
+                    <button class="btn-outline-green w-100" id="btn-sum-yesterday"
+                        onclick="app.generateSummary('yesterday')">昨日</button>
                     <button class="btn-outline-green w-100" id="btn-sum-week"
                         onclick="app.generateSummary('week')">本週</button>
+                    <button class="btn-outline-green w-100" id="btn-sum-last-week"
+                        onclick="app.generateSummary('last-week')">上週</button>
                     <button class="btn-outline-green w-100" id="btn-sum-month"
                         onclick="app.generateSummary('month')">本月</button>
+                    <button class="btn-outline-green w-100" id="btn-sum-last-month"
+                        onclick="app.generateSummary('last-month')">上月</button>
+                </div>
+
+                <div class="glass-card" style="padding:15px; margin-bottom:16px;">
+                    <div style="font-size:12px; color:var(--text-sub); font-weight:600; margin-bottom:8px;">自訂日期範圍</div>
+                    <div style="display:flex; gap:8px; align-items:center; margin-bottom:12px;">
+                        <input type="date" id="sum-start-date" class="custom-input" style="flex:1; text-align:center; padding:6px; font-size:13px;">
+                        <span style="color:var(--text-sub);">至</span>
+                        <input type="date" id="sum-end-date" class="custom-input" style="flex:1; text-align:center; padding:6px; font-size:13px;">
+                    </div>
+                    <button class="btn-outline-green w-100" id="btn-sum-custom" onclick="app.generateSummary('custom')" style="padding:10px; font-size:14px;">產生自訂範圍摘要</button>
                 </div>
 
                 <div class="glass-card" style="padding:15px; border:none; background:transparent;">
