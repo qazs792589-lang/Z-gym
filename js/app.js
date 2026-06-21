@@ -1268,7 +1268,7 @@ const app = {
 
     // ─── SUMMARY ─────────────────────────────────────────────
     generateSummary(range) {
-        ['today', 'yesterday', 'week', 'last-week', 'month', 'last-month', 'custom'].forEach(r => {
+        ['today', 'week', 'month', 'custom'].forEach(r => {
             const btn = document.getElementById(`btn-sum-${r}`);
             if (!btn) return;
             btn.className = r === range ? 'btn-full-green' : 'btn-outline-green w-100';
